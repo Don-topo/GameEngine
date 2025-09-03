@@ -1,0 +1,75 @@
+cmake_minimum_required(VERSION 3.30)
+
+# c++ 17 is required
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Set project name
+project(GameEngine)
+
+# Get dependencies
+include(FetchContent)
+
+# SDL
+FetchContent_Declare(
+    sdl3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL
+    GIT_TAG release-3.2.22
+    GIT_SWALLOW 1
+)
+
+FetchContent_MakeAvailable(sdl3)
+FetchContent_GetProperties(sdl3)
+if(NOT sdl3_POPULATED)
+    FetchContent
+
+# VK-Boostrap
+FetchContent_Declare(
+    vk_bootstrap
+    GIT_REPOSITORY https://github.com/charles-lunarg/vk-bootstrap
+    GIT_TAG v1.4.325
+    GIT_SWALLOW 1
+)
+
+FetchContent_MakeAvailable(vk_bootstrap)
+FetchContent_GetProperties(vk_bootstrap)
+if(NOT vk_bootstrap_POPULATED)
+    FetchContent_Populate(vk_bootstrap)
+    add_subdirectory(${vk_bootstrap_SOURCE_DIR} ${vk_bootstrap_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# VMA
+if (NOT DEFINED ENV{VK_SDK_PATH})
+  include(FetchContent)
+  FetchContent_Declare(
+    vma
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+    GIT_TAG        v3.3.0
+    GIT_SHALLOW 1
+  )
+
+  FetchContent_MakeAvailable(vma)
+
+  FetchContent_GetProperties(vma)
+  if(NOT vma_POPULATED)
+    FetchContent_Populate(vma)
+    add_subdirectory(${vma_SOURCE_DIR} EXCLUDE_FROM_ALL)
+  endif()
+
+  set(VMA_INCLUDE_DIR ${vma_SOURCE_DIR}/vma)
+endif()
+
+# ImGUI
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui
+    GIT_TAG v1.92.2
+    GIT_SHALLOW 1
+)
+
+FetchContent_MakeAvailable(imgui)
+FetchContent_GetProperties(imgui)
+if(NOT imgui_POPULATED)
+    FetchContent_Populate(imgui)
+    add_subdirectory(${imgui_SOURCE_DIR} EXCLUDE_FROM_ALL)
+endif()

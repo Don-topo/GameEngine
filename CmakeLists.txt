@@ -28,20 +28,32 @@ if(NOT vk_bootstrap_POPULATED)
     add_subdirectory(${vk_bootstrap_SOURCE_DIR} ${vk_bootstrap_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+# SDL 3
+include(FetchContent)
+FetchContent_Declare(
+  SDL3
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-3.2.22
+  GIT_SHALLOW TRUE  
+)
+
+FetchContent_MakeAvailable(SDL3)
+FetchContent_GetProperties(SDL3)
+
 file(GLOB SOURCES
     Main.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 
-add_executable(${PROJECT_NAME} Main.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-#target_include_directories(${PROJECT_NAME} PRIVATE
-#    ${vk_bootstrap_SOURCE_DIR}/src
-#)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${vk_bootstrap_SOURCE_DIR}/src
+)
 
-#if(MSVC)
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap)
-#else()
+if(MSVC)
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3)
+else()
   # Clang and GCC may need libstd++ and libmath
- # target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap stdc++ m)
-#endif()
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap stdc++ m)
+endif()

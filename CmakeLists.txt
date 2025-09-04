@@ -8,27 +8,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(GameEngine)
 
 # Get dependencies
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps CACHE PATH "Dependencies download dir")
 include(FetchContent)
-
-# SDL
-FetchContent_Declare(
-    sdl3
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL
-    GIT_TAG release-3.2.22
-    GIT_SWALLOW 1
-)
-
-FetchContent_MakeAvailable(sdl3)
-FetchContent_GetProperties(sdl3)
-if(NOT sdl3_POPULATED)
-    FetchContent
+set(FETCHCONTENT_QUIET OFF)
 
 # VK-Boostrap
+include(FetchContent)
 FetchContent_Declare(
     vk_bootstrap
     GIT_REPOSITORY https://github.com/charles-lunarg/vk-bootstrap
-    GIT_TAG v1.4.325
-    GIT_SWALLOW 1
+    GIT_TAG v1.3.290
+    GIT_SHALLOW TRUE
 )
 
 FetchContent_MakeAvailable(vk_bootstrap)
@@ -38,38 +28,20 @@ if(NOT vk_bootstrap_POPULATED)
     add_subdirectory(${vk_bootstrap_SOURCE_DIR} ${vk_bootstrap_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-# VMA
-if (NOT DEFINED ENV{VK_SDK_PATH})
-  include(FetchContent)
-  FetchContent_Declare(
-    vma
-    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-    GIT_TAG        v3.3.0
-    GIT_SHALLOW 1
-  )
-
-  FetchContent_MakeAvailable(vma)
-
-  FetchContent_GetProperties(vma)
-  if(NOT vma_POPULATED)
-    FetchContent_Populate(vma)
-    add_subdirectory(${vma_SOURCE_DIR} EXCLUDE_FROM_ALL)
-  endif()
-
-  set(VMA_INCLUDE_DIR ${vma_SOURCE_DIR}/vma)
-endif()
-
-# ImGUI
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui
-    GIT_TAG v1.92.2
-    GIT_SHALLOW 1
+file(GLOB SOURCES
+    Main.cpp
+    ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 
-FetchContent_MakeAvailable(imgui)
-FetchContent_GetProperties(imgui)
-if(NOT imgui_POPULATED)
-    FetchContent_Populate(imgui)
-    add_subdirectory(${imgui_SOURCE_DIR} EXCLUDE_FROM_ALL)
-endif()
+add_executable(${PROJECT_NAME} Main.cpp)
+
+#target_include_directories(${PROJECT_NAME} PRIVATE
+#    ${vk_bootstrap_SOURCE_DIR}/src
+#)
+
+#if(MSVC)
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap)
+#else()
+  # Clang and GCC may need libstd++ and libmath
+ # target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap stdc++ m)
+#endif()

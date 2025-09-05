@@ -55,8 +55,12 @@ file(GLOB SOURCES
     Engine/*.cpp
     Logger/*.h
     Logger/*.cpp
-    #Render/CommandBuffer/*cpp
-    #Render/CommandPool/*cpp
+    Render/*.h
+    Render/*.cpp
+    Render/CommandBuffer/*h
+    Render/CommandBuffer/*cpp
+    Render/CommandPool/*h
+    Render/CommandPool/*cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 

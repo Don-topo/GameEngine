@@ -29,6 +29,10 @@ if(NOT vk_bootstrap_POPULATED)
 endif()
 
 # SDL 3
+
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
+
 include(FetchContent)
 FetchContent_Declare(
   SDL3
@@ -40,8 +44,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SDL3)
 FetchContent_GetProperties(SDL3)
 
+# YAML-CPP
+#if(WIN32 AND NOT MINGW)
+#  FetchContent_Declare
+#endif()
+
 file(GLOB SOURCES
     Main.cpp
+    #Engine/*.cpp
+    #Render/CommandBuffer/*cpp
+    #Render/CommandPool/*cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 
@@ -52,7 +64,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 if(MSVC)
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3)
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static)
 else()
   # Clang and GCC may need libstd++ and libmath
   target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap stdc++ m)

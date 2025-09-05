@@ -51,7 +51,10 @@ FetchContent_GetProperties(SDL3)
 
 file(GLOB SOURCES
     Main.cpp
-    #Engine/*.cpp
+    Engine/*.h
+    Engine/*.cpp
+    Logger/*.h
+    Logger/*.cpp
     #Render/CommandBuffer/*cpp
     #Render/CommandPool/*cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp

@@ -1,0 +1,19 @@
+#pragma once
+#include <memory>
+#include <string>
+#include <SDL3/SDL.h>
+#include "../Logger/Logger.h"
+
+class GameEngine
+{
+public:
+	//GameEngine();
+	//~GameEngine();
+	void Initialization(unsigned int width, unsigned int height, std::string title);
+	void Loop();
+	void Cleanup();
+
+private:
+	SDL_Window* sdlWindow = nullptr;
+	std::string title;
+};

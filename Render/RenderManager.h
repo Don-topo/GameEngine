@@ -6,9 +6,9 @@
 class RenderManager
 {
 public:
-	RenderManager();
-	~RenderManager();
-
+	//RenderManager();
+	//~RenderManager();
+	void Initialization();
 private:
-	
+	VkInstance instance;
 };

@@ -77,7 +77,7 @@ if (NOT DEFINED ENV{VK_SDK_PATH})
   set(VMA_INCLUDE_DIR ${vma_SOURCE_DIR}/vma)
 endif()
 
-# SDL 3
+# SDL3
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 
@@ -120,6 +120,8 @@ file(GLOB SOURCES
     Logger/*.cpp
     Render/*.h
     Render/*.cpp
+    Render/Shader/*h
+    Render/Shader/*cpp
     Render/CommandBuffer/*h
     Render/CommandBuffer/*cpp
     Render/CommandPool/*h

@@ -5,6 +5,9 @@ void GameEngine::Initialization(unsigned int width, unsigned int height, std::st
 	DEV_ASSERT(SDL_Init(SDL_INIT_VIDEO) != 0, "GameEngine", "Error initializating SLD3!");
 	sdlWindow = SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_RESIZABLE);
 	DEV_ASSERT(sdlWindow, "GameEngine", "Error creating the SDL Window!");
+
+	renderManager = std::make_unique<RenderManager>();
+	renderManager->Initialization();
 }
 
 void GameEngine::Loop()
@@ -23,6 +26,7 @@ void GameEngine::Loop()
 
 void GameEngine::Cleanup()
 {
+	renderManager->Cleanup();
 	SDL_DestroyWindow(sdlWindow);
 	SDL_Quit();
 	DEV_LOG(TE_INFO, "GameEngine", "SDL Closed");

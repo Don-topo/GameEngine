@@ -3,6 +3,7 @@
 #include <string>
 #include <SDL3/SDL.h>
 #include "../Logger/Logger.h"
+#include "../Render/RenderManager.h"
 
 class GameEngine
 {
@@ -16,4 +17,5 @@ public:
 private:
 	SDL_Window* sdlWindow = nullptr;
 	std::string title;
+	std::unique_ptr<RenderManager> renderManager = nullptr;
 };

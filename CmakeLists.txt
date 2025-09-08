@@ -129,15 +129,50 @@ file(GLOB SOURCES
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 
-#find_package(SDL3 REQUIRED)
-find_package(Vulkan REQUIRED)
-
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${vk_bootstrap_SOURCE_DIR}/src
     ${VMA_SOURCE_DIR}/vma
 )
+
+# Intentar encontrar Vulkan
+find_package(Vulkan REQUIRED)
+
+if (Vulkan_FOUND)
+    message(STATUS "Vulkan encontrado: ${Vulkan_LIBRARIES}")
+
+    target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES})
+
+else()
+    message(WARNING "No se pudo encontrar Vulkan con find_package. Intentando manualmente...")
+
+    if (WIN32)
+        # En Windows, usar la variable de entorno VULKAN_SDK
+        set(VULKAN_SDK $ENV{VULKAN_SDK})
+        if (NOT VULKAN_SDK)
+            message(FATAL_ERROR "No se encontró la variable de entorno VULKAN_SDK. Instala el Vulkan SDK de LunarG.")
+        endif()
+
+        include_directories(${VULKAN_SDK}/Include)
+        link_directories(${VULKAN_SDK}/Lib)
+
+        target_link_libraries(${PROJECT_NAME} PRIVATE vulkan-1)
+
+    elseif(UNIX)
+        # En Linux, asumir que el paquete libvulkan está instalado
+        find_library(VULKAN_LIB vulkan)
+        if (NOT VULKAN_LIB)
+            message(FATAL_ERROR "No se encontró libvulkan. Instala Vulkan (ej: sudo apt install libvulkan-dev).")
+        endif()
+
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${VULKAN_LIB})
+
+    else()
+        message(FATAL_ERROR "Plataforma no soportada aún en este script")
+    endif()
+endif()
 
 # Incluir directorios de Vulkan
 target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS})
@@ -149,7 +184,7 @@ add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 
 
 if(MSVC)
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static Vulkan)
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static)
 else()
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static Vulkan stdc++ m)
+  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static stdc++ m)
 endif()

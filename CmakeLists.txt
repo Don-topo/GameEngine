@@ -128,6 +128,8 @@ file(GLOB SOURCES
     Render/CommandPool/*cpp
     Render/Framebuffer/*.h
     Render/Framebuffer/*.cpp
+    Render/Swapchain/*.h
+    Render/Swapchain/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
 )
 
@@ -184,6 +186,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES})
 
 add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 
+# TODO Compile shaders to spir-v
 
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static)

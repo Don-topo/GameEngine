@@ -11,6 +11,7 @@ public:
 	//RenderManager();
 	//~RenderManager();
 	void Initialization();
+	void Update();
 	void Cleanup();
 private:
 	VkInstance instance;

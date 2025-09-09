@@ -17,6 +17,7 @@ void RenderManager::Initialization()
 	// Create surface
 	// Create device
 	// TODO Select best available device
+	// TODO Create Vkdevice (physical and logic)
 
 	DEV_LOG(TE_INFO, "RenderManager", "Physical device selected");
 
@@ -25,8 +26,10 @@ void RenderManager::Initialization()
 	// Create CommandBuffer
 
 	// Create queues (Graphics, compute and present)
-	// Create Pipeline
+	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer
+
+	// TODO Create semaphores to sync GPU and CPU (fences)
 }
 
 void RenderManager::Cleanup()

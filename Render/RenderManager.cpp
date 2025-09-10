@@ -1,6 +1,6 @@
 #include "RenderManager.h"
 
-void RenderManager::Initialization()
+void RenderManager::Initialization(SDL_Window* window)
 {
 	// Create vulkan instance with vk-bootstrap
 	vkb::InstanceBuilder builder;
@@ -15,7 +15,19 @@ void RenderManager::Initialization()
 	DEV_LOG(TE_INFO, "RenderManager", "Instance created!");
 
 	// Create surface
+	DEV_ASSERT(SDL_Vulkan_LoadLibrary(NULL), "RenderManager", "Failed to load Vulkan library!");
+	VkSurfaceKHR surface; 
+	SDL_Vulkan_CreateSurface(window, instance, NULL, &surface);
+	DEV_LOG(TE_INFO, "RenderManager", "Surface created!");
 	// Create device
+	VkPhysicalDeviceFeatures requiredFeatures{};
+	requiredFeatures.samplerAnisotropy = VK_TRUE;
+	vkb::PhysicalDeviceSelector physicalDeviceSelector{ instance };
+	vkb::Result<vkb::PhysicalDevice> returnPhysicalDeviceSelector = physicalDeviceSelector.
+		set_surface(surface).
+		set_required_features(requiredFeatures).
+		select();
+	DEV_ASSERT(returnPhysicalDeviceSelector.has_value(), "RenderManager", "Failed to obtain a physical device!");
 	// TODO Select best available device
 	// TODO Create Vkdevice (physical and logic)
 

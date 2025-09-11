@@ -2,6 +2,8 @@
 
 void RenderManager::Initialization(SDL_Window* window)
 {
+	DEV_ASSERT(SDL_Vulkan_LoadLibrary(NULL), "RenderManager", "Failed to load Vulkan library!");
+
 	// Create vulkan instance with vk-bootstrap
 	vkb::InstanceBuilder builder;
 	vkb::Result<vkb::Instance> bInstance = builder.
@@ -15,11 +17,10 @@ void RenderManager::Initialization(SDL_Window* window)
 	DEV_LOG(TE_INFO, "RenderManager", "Instance created!");
 
 	// Create surface
-	DEV_ASSERT(SDL_Vulkan_LoadLibrary(NULL), "RenderManager", "Failed to load Vulkan library!");
-	VkSurfaceKHR surface; 
 	SDL_Vulkan_CreateSurface(window, instance, NULL, &surface);
 	DEV_LOG(TE_INFO, "RenderManager", "Surface created!");
-	// Create device
+
+	// Select best available device
 	VkPhysicalDeviceFeatures requiredFeatures{};
 	requiredFeatures.samplerAnisotropy = VK_TRUE;
 	vkb::PhysicalDeviceSelector physicalDeviceSelector{ instance };
@@ -28,10 +29,35 @@ void RenderManager::Initialization(SDL_Window* window)
 		set_required_features(requiredFeatures).
 		select();
 	DEV_ASSERT(returnPhysicalDeviceSelector.has_value(), "RenderManager", "Failed to obtain a physical device!");
-	// TODO Select best available device
-	// TODO Create Vkdevice (physical and logic)
+
+	VkPhysicalDeviceFeatures requiredFeatures2{};
+
+	vkGetPhysicalDeviceFeatures(returnPhysicalDeviceSelector.value(), &requiredFeatures2);
+	vkb::Result<vkb::PhysicalDevice> mainReturnedPhysicalDevice = physicalDeviceSelector.
+		set_surface(surface).
+		set_required_features(requiredFeatures2).
+		select();
+
+	DEV_ASSERT(mainReturnedPhysicalDevice.has_value(), "RenderManager", "Failed to obtain a suitable physical device!");
+
+	// Physical device
+	physicalDevice = mainReturnedPhysicalDevice.value();
 
 	DEV_LOG(TE_INFO, "RenderManager", "Physical device selected");
+
+	/* required for dynamic buffer with world position matrices */
+	/*VkDeviceSize minSSBOOffsetAlignment = mRenderData.rdVkbPhysicalDevice.properties.limits.minStorageBufferOffsetAlignment;
+	Logger::log(1, "%s: the physical device has a minimal SSBO offset of %i bytes\n", __FUNCTION__, minSSBOOffsetAlignment);
+	mMinSSBOOffsetAlignment = std::max(minSSBOOffsetAlignment, sizeof(glm::mat4));
+	Logger::log(1, "%s: SSBO offset has been adjusted to %i bytes\n", __FUNCTION__, mMinSSBOOffsetAlignment);
+
+	vkb::DeviceBuilder devBuilder{ mRenderData.rdVkbPhysicalDevice };
+	auto devBuilderRet = devBuilder.build();
+	if (!devBuilderRet) {
+		Logger::log(1, "%s error: could not get devices\n", __FUNCTION__);
+		return false;
+	}
+	mRenderData.rdVkbDevice = devBuilderRet.value();*/
 
 	// Create Swapchain
 	// Create CommandPool
@@ -46,5 +72,8 @@ void RenderManager::Initialization(SDL_Window* window)
 
 void RenderManager::Cleanup()
 {
-
+	vkb::destroy_surface(instance, surface);
+	DEV_LOG(TE_INFO, "RenderManager", "Surface destroyed!");
+	vkb::destroy_instance(instance);	
+	DEV_LOG(TE_INFO, "RenderManager", "Instance destroyed!");
 }

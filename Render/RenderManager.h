@@ -6,6 +6,7 @@
 #include "vk_mem_alloc.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <glm/glm.hpp>
 
 class RenderManager
 {
@@ -17,4 +18,7 @@ public:
 	void Cleanup();
 private:
 	vkb::Instance instance;
+	VkSurfaceKHR surface;
+	vkb::PhysicalDevice physicalDevice;
+	vkb::Device device;
 };

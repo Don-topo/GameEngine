@@ -43,24 +43,52 @@ void RenderManager::Initialization(SDL_Window* window)
 	// Physical device
 	physicalDevice = mainReturnedPhysicalDevice.value();
 
-	DEV_LOG(TE_INFO, "RenderManager", "Physical device selected");
-
 	/* required for dynamic buffer with world position matrices */
-	/*VkDeviceSize minSSBOOffsetAlignment = mRenderData.rdVkbPhysicalDevice.properties.limits.minStorageBufferOffsetAlignment;
-	Logger::log(1, "%s: the physical device has a minimal SSBO offset of %i bytes\n", __FUNCTION__, minSSBOOffsetAlignment);
-	mMinSSBOOffsetAlignment = std::max(minSSBOOffsetAlignment, sizeof(glm::mat4));
-	Logger::log(1, "%s: SSBO offset has been adjusted to %i bytes\n", __FUNCTION__, mMinSSBOOffsetAlignment);
+	DEV_LOG(TE_INFO, "RenderManager", "Physical device selected");
+	VkDeviceSize offsetAligment = physicalDevice.properties.limits.minStorageBufferOffsetAlignment;
+	offsetAligment = std::max(offsetAligment, sizeof(glm::mat4));
+	vkb::DeviceBuilder deviceBuilder { physicalDevice };
+	vkb::Result<vkb::Device> deviceBuilderReturn = deviceBuilder.build();
+	DEV_ASSERT(deviceBuilderReturn.has_value(), "RenderManager", "Error creating the logic device!");
+	device = deviceBuilderReturn.value();
+	DEV_LOG(TE_INFO, "RenderManager", "Device created!");
 
-	vkb::DeviceBuilder devBuilder{ mRenderData.rdVkbPhysicalDevice };
-	auto devBuilderRet = devBuilder.build();
-	if (!devBuilderRet) {
-		Logger::log(1, "%s error: could not get devices\n", __FUNCTION__);
-		return false;
-	}
-	mRenderData.rdVkbDevice = devBuilderRet.value();*/
+	// Init VMA
+	VmaAllocatorCreateInfo allocatorInfo{};
+	allocatorInfo.physicalDevice = physicalDevice;
+	allocatorInfo.device = device.device;
+	allocatorInfo.instance = instance.instance;
+
+	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator), "RenderManager", "Failed to initialize VMA!");	
 
 	// Create Swapchain
-	// Create CommandPool
+	vkb::SwapchainBuilder swapChainBuilder{ device };
+	VkSurfaceFormatKHR surfaceFormat;
+
+	/* set surface to non-sRGB */
+	surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	surfaceFormat.format = VK_FORMAT_B8G8R8A8_UNORM;
+
+	/* VK_PRESENT_MODE_FIFO_KHR enables vsync */
+	vkb::Result<vkb::Swapchain> swapChainBuildReturn = swapChainBuilder
+		.set_old_swapchain(swapchain)
+		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+		.set_desired_format(surfaceFormat)
+		.build();
+
+	DEV_ASSERT(swapChainBuildReturn.has_value(), "RenderManager", "Failed to create the Swapchain!");
+
+	vkb::destroy_swapchain(swapchain);
+	swapchain = swapChainBuildReturn.value();
+	swapchainImages = swapChainBuildReturn.value().get_images().value();
+	swapchainImageViews = swapChainBuildReturn.value().get_image_views().value();
+
+	DEV_LOG(TE_INFO, "RenderManager", "Swapchain created!");
+
+	// Create CommandPool (Graphics + Compute)
+	graphicsCommandPool.Initialization(device, vkb::QueueType::graphics);
+	computeCommandPool.Initialization(device, vkb::QueueType::compute);
+
 	// Create CommandBuffer
 
 	// Create queues (Graphics, compute and present)
@@ -71,7 +99,15 @@ void RenderManager::Initialization(SDL_Window* window)
 }
 
 void RenderManager::Cleanup()
-{
+{	
+	graphicsCommandPool.Cleanup(device.device);
+	computeCommandPool.Cleanup(device.device);
+	swapchain.destroy_image_views(swapchainImageViews);
+	DEV_LOG(TE_INFO, "RenderManager", "Swapchain Image Views destroyed!");
+	vkb::destroy_swapchain(swapchain);
+	DEV_LOG(TE_INFO, "RenderManager", "Swapchain destroyed!");
+	vkb::destroy_device(device);
+	DEV_LOG(TE_INFO, "RenderManager", "Device destroyed!");
 	vkb::destroy_surface(instance, surface);
 	DEV_LOG(TE_INFO, "RenderManager", "Surface destroyed!");
 	vkb::destroy_instance(instance);	

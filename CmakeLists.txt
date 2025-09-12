@@ -103,6 +103,8 @@ file(GLOB SOURCES
     Render/Framebuffer/*.cpp
     Render/Swapchain/*.h
     Render/Swapchain/*.cpp
+    Render/Syncronization/*.h
+    Render/Syncronization/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

@@ -24,6 +24,8 @@ private:
 	vkb::PhysicalDevice physicalDevice;
 	vkb::Device device;
 	VmaAllocator allocator;
+	VkQueue graphicsQueue;
+	VkQueue presentQueue;
 	vkb::Swapchain swapchain;
 	std::vector<VkImage> swapchainImages;
 	std::vector<VkImageView> swapchainImageViews;

@@ -61,6 +61,18 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator) == VK_SUCCESS, "RenderManager", "Failed to initialize VMA!");	
 
+	// Create VK_QUEUES (Present + Compute)
+	vkb::Result<VkQueue> graphicsQueueResult = device.get_queue(vkb::QueueType::graphics);
+	DEV_ASSERT(graphicsQueueResult.has_value(), "RenderManager", "Failed to get Graphics queue result!");
+	graphicsQueue = graphicsQueueResult.value();
+
+	vkb::Result<VkQueue> presentQueueResult = device.get_queue(vkb::QueueType::present);
+	DEV_ASSERT(presentQueueResult.has_value(), "RenderManager", "Failed to get Present queue result!");
+	presentQueue = presentQueueResult.value();
+
+	DEV_LOG(TE_INFO, "RenderManager", "Queues created!");
+
+
 	// Create Swapchain
 	vkb::SwapchainBuilder swapChainBuilder{ device };
 	VkSurfaceFormatKHR surfaceFormat;
@@ -90,8 +102,6 @@ void RenderManager::Initialization(SDL_Window* window)
 	computeCommandPool.Initialization(device, vkb::QueueType::compute);
 
 	// Create CommandBuffer
-
-	// Create queues (Graphics, compute and present)
 	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer
 

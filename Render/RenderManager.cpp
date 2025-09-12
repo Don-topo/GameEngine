@@ -59,7 +59,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	allocatorInfo.device = device.device;
 	allocatorInfo.instance = instance.instance;
 
-	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator), "RenderManager", "Failed to initialize VMA!");	
+	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator) == VK_SUCCESS, "RenderManager", "Failed to initialize VMA!");	
 
 	// Create Swapchain
 	vkb::SwapchainBuilder swapChainBuilder{ device };

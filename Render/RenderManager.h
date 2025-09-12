@@ -3,7 +3,7 @@
 #include "../Logger/Logger.h"
 #include <VkBootstrap.h>
 #include "vulkan/vulkan.h"
-#include "vk_mem_alloc.h"
+#include <vma/vk_mem_alloc.h>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <glm/glm.hpp>

@@ -107,6 +107,8 @@ file(GLOB SOURCES
     Render/Swapchain/*.cpp
     Render/Syncronization/*.h
     Render/Syncronization/*.cpp
+    Render/RenderPass/*.h
+    Render/RenderPass/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

@@ -106,6 +106,19 @@ void RenderManager::Initialization(SDL_Window* window)
 	// Create Framebuffer
 
 	// TODO Create semaphores to sync GPU and CPU (fences)
+
+	// TODO DepthBuffer
+	// TODO VertexBuffer
+
+	// TODO Create matrix to apply translations and rotations
+	// TODO Descriptors
+		// TODO Descriptor pool
+		// TODO Descriptor layouts
+		// TODO Descriptor sets
+	// TODO RenderPass
+	// TODO Pipeline layout
+	// TODO Pipeline
+
 }
 
 void RenderManager::Cleanup()

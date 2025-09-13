@@ -13,5 +13,6 @@ public:
 
 private:
 	time_point<steady_clock> tim = {};
+	bool alreadyStarted = false;
 };
 

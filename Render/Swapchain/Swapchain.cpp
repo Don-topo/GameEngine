@@ -1,9 +1,8 @@
 #include "Swapchain.h"
 
-void Swapchain::Initialization(VkDevice device)
+void Swapchain::Initialization(vkb::Device device)
 {
-	// TODO Fix this need a vkb device not VkDevice
-	/*vkb::SwapchainBuilder swapchainBuilder = {device};
+	vkb::SwapchainBuilder swapchainBuilder{ device };
 	VkSurfaceFormatKHR surfaceFormatKHR;
 	surfaceFormatKHR.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 	surfaceFormatKHR.format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -15,10 +14,12 @@ void Swapchain::Initialization(VkDevice device)
 		build();
 
 	DEV_ASSERT(swapchainResult.has_value(), "Swapchain", "Failed to create the SwapChain!");
-	swapchain = swapchainResult.value();*/
+	swapchain = swapchainResult.value();
+	DEV_LOG(TE_INFO, "Swapchain", "Swapchain created!");
 }
 
 void Swapchain::Cleanup()
 {
-
+	vkb::destroy_swapchain(swapchain);
+	DEV_LOG(TE_INFO, "Swapchain", "Swapchain destroyed!");
 }

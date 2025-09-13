@@ -3,14 +3,13 @@
 #include "../../Logger/Logger.h"
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <VkBootstrap.h>
 
 class Framebuffer
 {
 public:
-	//Framebuffer();
-	//~Framebuffer();
-	void Initialization(VkDevice device);
+	void Initialization(VkDevice device, vkb::Swapchain swapchain);
 	void Cleanup(VkDevice device);
 private:
-	//std::vector<
+	std::vector<VkFramebuffer> framebuffers;
 };

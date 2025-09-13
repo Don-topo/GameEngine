@@ -91,6 +91,8 @@ file(GLOB SOURCES
     Engine/*.cpp
     Logger/*.h
     Logger/*.cpp
+    Timer/*.h
+    Timer/*.cpp
     Render/*.h
     Render/*.cpp
     Render/Shader/*h

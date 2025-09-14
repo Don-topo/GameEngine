@@ -81,9 +81,12 @@ if(NOT stbi_POPULATED)
 endif()
 
 # YAML-CPP
-#if(WIN32 AND NOT MINGW)
-#  FetchContent_Declare
-#endif()
+FetchContent_Declare(
+    yaml-cpp
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_TAG 0.8.0
+)
+FetchContent_MakeAvailable(yaml-cpp)
 
 # Assimp
 FetchContent_Declare(
@@ -135,7 +138,7 @@ file(GLOB SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp yaml-cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE ${assimp_SOURCE_DIR}/include)
 
 target_include_directories(${PROJECT_NAME} PRIVATE

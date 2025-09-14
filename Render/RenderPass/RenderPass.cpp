@@ -2,7 +2,7 @@
 
 void RenderPass::Initialization(VkDevice device, VkFormat imageFormat, VkFormat depthFormat)
 {
-
+	VkAttachmentDescription colAttachment = {};
 }
 
 void RenderPass::Cleanup(VkDevice device)

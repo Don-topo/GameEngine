@@ -14,7 +14,7 @@ void AudioManager::LoadAudio(std::string fileName)
 	DEV_ASSERT(fmodSystem->createSound(fileName.c_str(), FMOD_DEFAULT, nullptr, &newSound), "AudioManager", "Error loading audio clip %s!", fileName);
 	DEV_LOG(TE_INFO, "AudioManager", "Audio file loaded!");
 	AudioClip newAudioClip;
-	newAudioClip.Initialization(fileName, newSound);
+	//newAudioClip.Initialization(fileName, newSound);
 	audioClips.push_back(newAudioClip);
 }
 

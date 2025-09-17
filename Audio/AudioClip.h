@@ -8,7 +8,10 @@
 class AudioClip
 {
 public:
+	void Initialization(std::string fileName, FMOD::Sound* sound);
 	void Initialization(std::string fileName, FMOD::Sound* sound, FMOD::Channel* channel, bool looping = false, bool is3D = false, float volume = 0.5f, glm::vec3 position = { 0.0f, 0.0f, 0.0f }, glm::vec3 velocity = { 0.0f, 0.0f, 0.f });
+	void Cleanup();
+
 	// Setters
 	void SetIsLooping(bool loop);
 	void SetIs3D(bool is3D);

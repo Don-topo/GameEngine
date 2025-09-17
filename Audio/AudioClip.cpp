@@ -1,5 +1,18 @@
 #include "AudioClip.h"
 
+void AudioClip::Initialization(std::string fileName, FMOD::Sound* sound)
+{
+	this->fileName = fileName;
+	this->soundClip = sound;
+	channel = nullptr;
+	isLooping = true;
+	is3DSound = false;
+	volume = 1.f;
+	position = { 0.f, 0.f, 0.f };
+	velocity = { 0.f, 0.f, 0.f };
+	SetAttributes();
+}
+
 void AudioClip::Initialization(std::string fileName, FMOD::Sound* sound, FMOD::Channel* channel, bool looping, bool is3D, float volume, glm::vec3 position, glm::vec3 velocity)
 {
 	this->fileName = fileName;
@@ -10,6 +23,13 @@ void AudioClip::Initialization(std::string fileName, FMOD::Sound* sound, FMOD::C
 	this->volume = volume;
 	this->position = { position.x, position.y, position.z };
 	this->velocity = { velocity.x, velocity.y, velocity.z };
+}
+
+void AudioClip::Cleanup()
+{
+	soundClip = nullptr;
+	fileName.clear();
+	channel = nullptr;
 }
 
 void AudioClip::SetIsLooping(bool loop)

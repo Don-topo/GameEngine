@@ -158,6 +158,8 @@ file(GLOB SOURCES
     Render/Syncronization/*.cpp
     Render/RenderPass/*.h
     Render/RenderPass/*.cpp
+    Render/Pipelines/*.h
+    Render/Pipelines/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

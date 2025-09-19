@@ -158,6 +158,8 @@ file(GLOB SOURCES
     Render/Syncronization/*.cpp
     Render/RenderPass/*.h
     Render/RenderPass/*.cpp
+    Render/Texture/*.h
+    Render/Texture/*.cpp
     Render/Pipelines/*.h
     Render/Pipelines/*.cpp
     Render/PipelineLayout/*.h

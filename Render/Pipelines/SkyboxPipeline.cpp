@@ -23,10 +23,42 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	fragmentShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fragmentShaderStageInfo.module = fragmentShader->GetShader();
 	fragmentShaderStageInfo.pName = "main";
-
 	
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageInfo, fragmentShaderStageInfo };
+	VkVertexInputBindingDescription vertexBindings[] = {{0, static_cast<uint32_t>(sizeof(SkyboxVertex)), VK_VERTEX_INPUT_RATE_VERTEX}};
 
+	// Vertex input => vertexAttributes + vertexBindings
+	VkVertexInputAttributeDescription attributeDescription = {};
+	attributeDescription.binding = 0;
+	attributeDescription.location = 0;
+	attributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attributeDescription.offset = static_cast<uint32_t>(offsetof(SkyboxVertex, position));
+
+	// Vertex input
+	VkPipelineVertexInputStateCreateInfo vertexInputStateInfo = {};
+	vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputStateInfo.vertexAttributeDescriptionCount = 1;
+	vertexInputStateInfo.pVertexAttributeDescriptions = &attributeDescription;
+	vertexInputStateInfo.vertexBindingDescriptionCount = sizeof(vertexBindings);
+	vertexInputStateInfo.pVertexBindingDescriptions = vertexBindings;
+
+	// Input assembly
+	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo = {};
+	inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssemblyStateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssemblyStateInfo.primitiveRestartEnable = VK_FALSE;
+
+	// Viewport
+	VkViewport viewport{};
+	VkRect2D scissor{};
+
+	VkPipelineViewportStateCreateInfo viewportStateInfo = {};
+	viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportStateInfo.viewportCount = 1;
+	viewportStateInfo.pViewports = &viewport;
+	viewportStateInfo.scissorCount = 1;
+	viewportStateInfo.pScissors = &scissor;
+	
 	// Rasterizer
 	VkPipelineRasterizationStateCreateInfo rasterizerStateInfo = {};
 	rasterizerStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -42,40 +74,60 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	VkPipelineMultisampleStateCreateInfo multisamplingStateInfo = {};
 	multisamplingStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisamplingStateInfo.sampleShadingEnable = VK_FALSE;
-	multisamplingStateInfo.rasterizationSamples;
+	multisamplingStateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	// Depth Stencil
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateInfo = {};
 	depthStencilStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencilStateInfo.depthTestEnable = VK_TRUE;
-	depthStencilStateInfo.depthWriteEnable = VK_TRUE;
-	depthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencilStateInfo.depthTestEnable = VK_FALSE;
+	depthStencilStateInfo.depthWriteEnable = VK_FALSE;
+	depthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_ALWAYS;
 	depthStencilStateInfo.depthBoundsTestEnable = VK_FALSE;
 	depthStencilStateInfo.stencilTestEnable = VK_FALSE;
+	depthStencilStateInfo.minDepthBounds = 0.f;
+	depthStencilStateInfo.maxDepthBounds = 1.f;
 
 	// Color Blending (First attach the color to blend)
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-	colorBlendAttachment.colorWriteMask;
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
 
 	VkPipelineColorBlendStateCreateInfo colorBlendStateInfo = {};
 	colorBlendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	
+	colorBlendStateInfo.logicOpEnable = VK_FALSE;
+	colorBlendStateInfo.logicOp = VK_LOGIC_OP_COPY;
+	colorBlendStateInfo.attachmentCount = 1;
+	colorBlendStateInfo.pAttachments = &colorBlendAttachment;
+	colorBlendStateInfo.blendConstants[0] = 0.f;
+	colorBlendStateInfo.blendConstants[1] = 0.f;
+	colorBlendStateInfo.blendConstants[2] = 0.f;
+	colorBlendStateInfo.blendConstants[3] = 0.f;
 
+	// Dynamic state
+	VkDynamicState dynamicStates[] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
 
+	VkPipelineDynamicStateCreateInfo dynamicStateInfo = {};
+	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicStateInfo.dynamicStateCount = 2;
+	dynamicStateInfo.pDynamicStates = dynamicStates;
+
+	// Creation of the actual pipeline
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineCreateInfo.stageCount;
-	pipelineCreateInfo.pStages;
-	pipelineCreateInfo.pVertexInputState;
-	pipelineCreateInfo.pInputAssemblyState;
-	pipelineCreateInfo.pViewportState;
-	pipelineCreateInfo.pRasterizationState;
-	pipelineCreateInfo.pMultisampleState;
-	pipelineCreateInfo.pDepthStencilState;
-	pipelineCreateInfo.pColorBlendState;
-	pipelineCreateInfo.pDynamicState;
-	pipelineCreateInfo.layout;
+	pipelineCreateInfo.stageCount = 2;
+	pipelineCreateInfo.pStages = shaderStages;
+	pipelineCreateInfo.pVertexInputState = &vertexInputStateInfo;
+	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateInfo;
+	pipelineCreateInfo.pViewportState = &viewportStateInfo;
+	pipelineCreateInfo.pRasterizationState = &rasterizerStateInfo;
+	pipelineCreateInfo.pMultisampleState = &multisamplingStateInfo;
+	pipelineCreateInfo.pDepthStencilState = &depthStencilStateInfo;
+	pipelineCreateInfo.pColorBlendState = &colorBlendStateInfo;
+	pipelineCreateInfo.pDynamicState = &dynamicStateInfo;
+	pipelineCreateInfo.layout = pipelineLayout;
 	pipelineCreateInfo.renderPass = renderpass;
 	pipelineCreateInfo.subpass = 0;
 	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;

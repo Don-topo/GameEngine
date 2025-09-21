@@ -164,6 +164,10 @@ file(GLOB SOURCES
     Render/Pipelines/*.cpp
     Render/PipelineLayout/*.h
     Render/PipelineLayout/*.cpp
+    Render/IndexBuffer/*.h
+    Render/IndexBuffer/*.cpp
+    Render/UniformBuffer/*.h
+    Render/UniformBuffer/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

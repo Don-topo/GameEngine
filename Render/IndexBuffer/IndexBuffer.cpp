@@ -26,9 +26,50 @@ void IndexBuffer::Initialization(VmaAllocator allocator, size_t sizeToAllocate)
 	indexBufferData.bufferSize = sizeToAllocate;
 }
 
-void IndexBuffer::Cleanup(VmaAllocator allocator)
+void IndexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, VkMesh vertexData)
 {
+	unsigned int vertexIndicesSize = vertexData.indices.size() * sizeof(uint32_t);
+	if (indexBufferData.bufferSize < vertexIndicesSize)
+	{
+		Cleanup(allocator);
+		Initialization(allocator, vertexIndicesSize);
+	}
+
+	void* data;
+
+	DEV_ASSERT(vmaMapMemory(allocator, indexBufferData.stagingBufferAlloc, &data), "IndexBuffer", "Error allocating IndexBuffer!");
+	std::memcpy(data, vertexData.indices.data(), vertexIndicesSize);
+	vmaUnmapMemory(allocator, indexBufferData.stagingBufferAlloc);
+	vmaFlushAllocation(allocator, indexBufferData.stagingBufferAlloc, 0, vertexIndicesSize);
+
+	VkBufferMemoryBarrier bufferMemoryBarrier = {};
+	bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	bufferMemoryBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+	bufferMemoryBarrier.dstAccessMask = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+	bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	bufferMemoryBarrier.buffer = indexBufferData.stagingBuffer;
+	bufferMemoryBarrier.offset = 0;
+	bufferMemoryBarrier.size = indexBufferData.bufferSize;
+
+	VkBufferCopy bufferCopy = {};
+	bufferCopy.srcOffset = 0;
+	bufferCopy.dstOffset = 0;
+	bufferCopy.size = indexBufferData.bufferSize;	
+	
+	commandBuffer.CreateSingleShotBuffer(device, commandPool);
+	vkCmdCopyBuffer(commandBuffer.GetCommandBuffer(), indexBufferData.stagingBuffer, indexBufferData.buffer, 1, &bufferCopy);
+	vkCmdPipelineBarrier(commandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr);
+
+	commandBuffer.submitSingleShotBuffer(device, commandPool, queue);
+}
+
+void IndexBuffer::Cleanup(VmaAllocator allocator, VkDevice device)
+{	
 	vmaDestroyBuffer(allocator, indexBufferData.stagingBuffer, indexBufferData.stagingBufferAlloc);
 	vmaDestroyBuffer(allocator, indexBufferData.buffer, indexBufferData.bufferAlloc);
+
+	commandBuffer.Cleanup(device);
+
 	DEV_LOG(TE_INFO, "IndexBuffer", "IndexBuffers destroyed!");
 }

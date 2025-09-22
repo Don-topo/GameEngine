@@ -142,6 +142,8 @@ file(GLOB SOURCES
     Texture/*.cpp
     Audio/*.h
     Audio/*.cpp
+    Camera/*.h
+    Camera/*.cpp
     Render/*.h
     Render/*.cpp
     Render/Shader/*h
@@ -168,6 +170,8 @@ file(GLOB SOURCES
     Render/IndexBuffer/*.cpp
     Render/UniformBuffer/*.h
     Render/UniformBuffer/*.cpp
+    Render/VertexBuffer/*.h
+    Render/VertexBuffer/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

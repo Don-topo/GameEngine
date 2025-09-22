@@ -102,11 +102,15 @@ void RenderManager::Initialization(SDL_Window* window)
 	computeCommandPool.Initialization(device, vkb::QueueType::compute);
 
 	// Create CommandBuffer
+	commandBuffer.Initialization(device, graphicsCommandPool.GetCommandPool());
+	
 	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer
+	//framebuffer.Initialization(device, swapchain);
 
 	// TODO Create semaphores to sync GPU and CPU (fences)
-
+	fences.Initialization(device);
+	semaphores.Initialization(device);
 	// TODO DepthBuffer
 	// TODO VertexBuffer
 
@@ -117,12 +121,27 @@ void RenderManager::Initialization(SDL_Window* window)
 		// TODO Descriptor sets
 	// TODO RenderPass
 	// TODO Pipeline layout
+	// Skybox
+	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
+	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
+	VkDescriptorSetLayout skyboxLayouts[] =
+	{
+		rdAssimpTextureDescriptorLayout,
+		rdSkyboxDescriptorLayout
+	};
+	//skyboxLayout.Initialization(device, skyboxLayouts);
 	// TODO Pipeline
+	// Skybox
+	std::string vertexShaderFileName = "skybox.vert.spv";
+	std::string fragmentShaderFileName = "skybox.frag.spv";
+	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderpass, vertexShaderFileName, fragmentShaderFileName);
 
 }
 
 void RenderManager::Cleanup()
 {	
+	framebuffer.Cleanup(device);
+	commandBuffer.Cleanup(device);
 	graphicsCommandPool.Cleanup(device.device);
 	computeCommandPool.Cleanup(device.device);
 	swapchain.destroy_image_views(swapchainImageViews);

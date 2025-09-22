@@ -22,7 +22,7 @@ void Framebuffer::Initialization(VkDevice device, vkb::Swapchain swapchain)
 		framebufferCreateInfo.height = swapchain.extent.height;
 		framebufferCreateInfo.layers = 1;
 
-		DEV_ASSERT(vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers.at(i)), "Framebuffer", "Failed to create the Framebuffer!");
+		DEV_ASSERT(vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers.at(i)) == VK_SUCCESS, "Framebuffer", "Failed to create the Framebuffer!");
 	}
 	DEV_LOG(TE_INFO, "Framebuffer", "Framebuffers created!");
 }

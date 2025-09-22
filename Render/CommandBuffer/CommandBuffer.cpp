@@ -10,22 +10,22 @@ void CommandBuffer::Initialization(VkDevice device, VkCommandPool commandPool)
 	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	commandBufferAllocateInfo.commandBufferCount = 1;
 
-	DEV_ASSERT(vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer), "CommandBuffer", "Error allocating the CommandBuffer!");
+	DEV_ASSERT(vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer) == VK_SUCCESS, "CommandBuffer", "Error allocating the CommandBuffer!");
 }
 
 void CommandBuffer::Begin(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 {
-	DEV_ASSERT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo), "CommandBuffer", "Error begining CommandBuffer!");
+	DEV_ASSERT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo) == VK_SUCCESS, "CommandBuffer", "Error begining CommandBuffer!");
 }
 
 void CommandBuffer::End()
 {
-	DEV_ASSERT(vkEndCommandBuffer(commandBuffer), "CommandBuffer", "Error ending the CommandBuffer!");
+	DEV_ASSERT(vkEndCommandBuffer(commandBuffer) == VK_SUCCESS, "CommandBuffer", "Error ending the CommandBuffer!");
 }
 
 void CommandBuffer::Reset(VkCommandBufferResetFlags resetFlags)
 {
-	DEV_ASSERT(vkResetCommandBuffer(commandBuffer, resetFlags), "CommandBuffer", "Error reseting the CommandBuffer");
+	DEV_ASSERT(vkResetCommandBuffer(commandBuffer, resetFlags) == VK_SUCCESS, "CommandBuffer", "Error reseting the CommandBuffer");
 }
 
 void CommandBuffer::BeginSingleShot()
@@ -34,7 +34,7 @@ void CommandBuffer::BeginSingleShot()
 	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	DEV_ASSERT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo), "CommandBuffer", "Error creating the one shot CommandBuffer!");
+	DEV_ASSERT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo) == VK_SUCCESS, "CommandBuffer", "Error creating the one shot CommandBuffer!");
 }
 
 void CommandBuffer::CreateSingleShotBuffer(VkDevice device, VkCommandPool commandPool)
@@ -61,13 +61,13 @@ void CommandBuffer::submitSingleShotBuffer(VkDevice device, VkCommandPool comman
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	DEV_ASSERT(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence), "CommandBuffer", "Error creating the fence in SubmitSingleShotBuffer!");
+	DEV_ASSERT(vkCreateFence(device, &fenceCreateInfo, nullptr, &fence) == VK_SUCCESS, "CommandBuffer", "Error creating the fence in SubmitSingleShotBuffer!");
 
-	DEV_ASSERT(vkResetFences(device, 1, &fence), "CommandBuffer", "Error reseting the Fence in SubmitSingleShotBuffer!");
+	DEV_ASSERT(vkResetFences(device, 1, &fence) == VK_SUCCESS, "CommandBuffer", "Error reseting the Fence in SubmitSingleShotBuffer!");
 
-	DEV_ASSERT(vkQueueSubmit(queue, 1, &submitInfo, fence), "CommandBuffer", "Error submiting the Queue in SubmitSingleShotBuffer!");
+	DEV_ASSERT(vkQueueSubmit(queue, 1, &submitInfo, fence) == VK_SUCCESS, "CommandBuffer", "Error submiting the Queue in SubmitSingleShotBuffer!");
 
-	DEV_ASSERT(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT32_MAX), "CommandBuffer", "Error waiting the Fence in SubmitSingleShotBuffer!");
+	DEV_ASSERT(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT32_MAX) == VK_SUCCESS, "CommandBuffer", "Error waiting the Fence in SubmitSingleShotBuffer!");
 
 	vkDestroyFence(device, fence, nullptr);
 

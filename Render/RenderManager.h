@@ -9,12 +9,16 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include "CommandPool/CommandPool.h"
+#include "CommandBuffer/CommandBuffer.h"
+#include "PipelineLayout/PipelineLayout.h"
+#include "Pipelines/SkyboxPipeline.h"
+#include "Framebuffer/Framebuffer.h"
+#include "Syncronization/SyncFences.h"
+#include "Syncronization/SyncSemaphores.h"
 
 class RenderManager
 {
 public:
-	//RenderManager();
-	//~RenderManager();
 	void Initialization(SDL_Window* window);
 	void Update();
 	void Cleanup();
@@ -29,6 +33,12 @@ private:
 	vkb::Swapchain swapchain;
 	std::vector<VkImage> swapchainImages;
 	std::vector<VkImageView> swapchainImageViews;
+	Framebuffer framebuffer;
 	CommandPool graphicsCommandPool;
 	CommandPool computeCommandPool;
+	CommandBuffer commandBuffer;
+	PipelineLayout skyboxLayout;
+	SkyboxPipeline skyboxPipeline;
+	SyncFences fences;
+	SyncSemaphores semaphores;
 };

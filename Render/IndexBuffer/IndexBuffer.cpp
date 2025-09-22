@@ -31,7 +31,7 @@ void IndexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandP
 	unsigned int vertexIndicesSize = vertexData.indices.size() * sizeof(uint32_t);
 	if (indexBufferData.bufferSize < vertexIndicesSize)
 	{
-		Cleanup(allocator);
+		Cleanup(allocator, device);
 		Initialization(allocator, vertexIndicesSize);
 	}
 

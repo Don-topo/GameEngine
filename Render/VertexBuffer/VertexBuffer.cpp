@@ -30,9 +30,29 @@ void VertexBuffer::Initialization(VmaAllocator allocator, unsigned int bufferSiz
 
 }
 
-void VertexBuffer::UploadData(VmaAllocator allocator, VkMesh meshData)
+void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkMesh vertexData)
 {
-	unsigned int vertexDataSize = meshData.vertices.size() * sizeof(VkVertex);
+	unsigned int dataSize = vertexData.vertices.size() * sizeof(VkVertex);
+
+	if (vertexBufferData.bufferSize < dataSize)
+	{
+		Cleanup(allocator);
+		Initialization(allocator, dataSize);
+		vertexBufferData.bufferSize = dataSize;
+	}
+
+	void* data;
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error allocating memory!");
+	std::memcpy(data, vertexData.vertices.data(), dataSize);
+	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
+	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, dataSize);
+
+	UploadToGPU(device, commandPool, graphicsQueue);
+}
+
+void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, LineMesh vertexData)
+{
+	unsigned int vertexDataSize = vertexData.vertices.size() * sizeof(LineMesh);
 
 	if (vertexBufferData.bufferSize < vertexDataSize)
 	{
@@ -42,9 +62,78 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkMesh meshData)
 	}
 
 	void* data;
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping the vertex buffer!");
+	std::memcpy(data, vertexData.vertices.data(), vertexDataSize);
+	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
+	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);
 
-	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping VertexBuffer!");
+	UploadToGPU(device, commandPool, graphicsQueue);
+}
 
+void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, SkyboxMesh vertexData)
+{
+	unsigned int vertexDataSize = vertexData.vertices.size() * sizeof(SkyboxMesh);
+
+	if (vertexBufferData.bufferSize < vertexDataSize)
+	{
+		Cleanup(allocator);
+		Initialization(allocator, vertexDataSize);
+		vertexBufferData.bufferSize = vertexDataSize;
+	}
+
+	void* data;
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping vertex buffer!");
+	std::memcpy(data, vertexData.vertices.data(), vertexDataSize);
+	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
+	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);
+
+	UploadToGPU(device, commandPool, graphicsQueue);
+}
+
+void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, std::vector<glm::vec3> vertexData)
+{
+	unsigned int vertexDataSize = vertexData.size() * sizeof(glm::vec3);
+
+	if (vertexBufferData.bufferSize < vertexDataSize)
+	{
+		Cleanup(allocator);
+		Initialization(allocator, vertexDataSize);
+		vertexBufferData.bufferSize = vertexDataSize;
+	}
+
+	void* data;
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping vertex buffer!");
+	std::memcpy(data, vertexData.data(), vertexDataSize);
+	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
+	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);
+
+	UploadToGPU(device, commandPool, graphicsQueue);
+}
+
+void VertexBuffer::UploadToGPU(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue)
+{
+	VkBufferMemoryBarrier bufferMemoryBarrier = {};
+	bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	bufferMemoryBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+	bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+	bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	bufferMemoryBarrier.buffer = vertexBufferData.stagingBuffer;
+	bufferMemoryBarrier.offset = 0;
+	bufferMemoryBarrier.size = vertexBufferData.bufferSize;
+
+	VkBufferCopy bufferCopy = {};
+	bufferCopy.srcOffset = 0;
+	bufferCopy.dstOffset = 0;
+	bufferCopy.size = vertexBufferData.bufferSize;
+
+	CommandBuffer commandBuffer;
+	commandBuffer.CreateSingleShotBuffer(device, commandPool);
+
+	vkCmdCopyBuffer(commandBuffer.GetCommandBuffer(), vertexBufferData.stagingBuffer, vertexBufferData.buffer, 1, &bufferCopy);
+	vkCmdPipelineBarrier(commandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr);
+	commandBuffer.submitSingleShotBuffer(device, commandPool, graphicsQueue);
+	// TODO After this I need to delete this commandBuffer to avoid a memory leak?
 }
 
 void VertexBuffer::Cleanup(VmaAllocator allocator)

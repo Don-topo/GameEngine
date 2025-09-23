@@ -120,6 +120,7 @@ void RenderManager::Initialization(SDL_Window* window)
 		// TODO Descriptor layouts
 		// TODO Descriptor sets
 	// TODO RenderPass
+	//renderPass.Initialization(device)
 	// TODO Pipeline layout
 	// Skybox
 	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
@@ -132,14 +133,16 @@ void RenderManager::Initialization(SDL_Window* window)
 	//skyboxLayout.Initialization(device, skyboxLayouts);
 	// TODO Pipeline
 	// Skybox
-	std::string vertexShaderFileName = "skybox.vert.spv";
-	std::string fragmentShaderFileName = "skybox.frag.spv";
+	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
+	std::string fragmentShaderFileName = "Shader/skybox.frag.spv";
 	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderpass, vertexShaderFileName, fragmentShaderFileName);
 
 }
 
 void RenderManager::Cleanup()
 {	
+	fences.Cleanup(device);
+	semaphores.Cleanup(device);
 	framebuffer.Cleanup(device);
 	commandBuffer.Cleanup(device);
 	graphicsCommandPool.Cleanup(device.device);

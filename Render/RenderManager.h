@@ -15,6 +15,7 @@
 #include "Framebuffer/Framebuffer.h"
 #include "Syncronization/SyncFences.h"
 #include "Syncronization/SyncSemaphores.h"
+#include "RenderPass/RenderPass.h"
 
 class RenderManager
 {
@@ -41,4 +42,5 @@ private:
 	SkyboxPipeline skyboxPipeline;
 	SyncFences fences;
 	SyncSemaphores semaphores;
+	RenderPass renderPass;
 };

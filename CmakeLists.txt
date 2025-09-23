@@ -274,6 +274,47 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${glm_SOURCE_DIR})
 
 
 # TODO Compile shaders to spir-v
+file(GLOB GLSL_SOURCE_FILES
+  shader/*.frag
+  shader/*.vert
+  shader/*.comp
+)
+
+if(Vulkan_GLSLC_EXECUTABLE)
+  message("Using glslc to compile shaders")
+  foreach(GLSL ${GLSL_SOURCE_FILES})
+    get_filename_component(FILE_NAME ${GLSL} NAME)
+    set(SPIRV "${CMAKE_SOURCE_DIR}/Shaders/${FILE_NAME}.spv")
+    add_custom_command(
+      OUTPUT ${SPIRV}
+      COMMAND ${Vulkan_GLSLC_EXECUTABLE} -o ${SPIRV} ${GLSL}
+      DEPENDS ${GLSL})
+    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+  endforeach(GLSL)
+elseif (Vulkan_GLSLANG_VALIDATOR_EXECUTABLE)
+  message("Using glslangValidator to compile shaders")
+  foreach(GLSL ${GLSL_SOURCE_FILES})
+    get_filename_component(FILE_NAME ${GLSL} NAME)
+    set(SPIRV "${CMAKE_SOURCE_DIR}/Shaders/${FILE_NAME}.spv")
+    add_custom_command(
+      OUTPUT ${SPIRV}
+      COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} -V -o ${SPIRV} ${GLSL}
+      DEPENDS ${GLSL})
+    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+  endforeach(GLSL)
+endif()
+
+add_custom_target(
+  Shaders
+  DEPENDS ${SPIRV_BINARY_FILES}
+)
+add_dependencies(${PROJECT_NAME} Shaders)
+
+add_custom_command(TARGET Shaders POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  "$<TARGET_PROPERTY:${PROJECT_NAME},SOURCE_DIR>/Shaders"
+  "$<TARGET_PROPERTY:${PROJECT_NAME},BINARY_DIR>/$<CONFIGURATION>/Shaders"
+)
 
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static)

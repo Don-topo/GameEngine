@@ -17,15 +17,19 @@ struct TextureData {
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 };
 
+struct VkTextureStagingBuffer {
+	VkBuffer stagingBuffer = VK_NULL_HANDLE;
+	VmaAllocation stagingBufferAlloc = VK_NULL_HANDLE;
+};
+
+
 class Texture
 {
 public:
-	void LoadTexture();
-	void LoadCubeTexture();
-	void Cleanup(VkDevice device);
+	void LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, std::string textureFilename, bool flipImage);
+	void Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device, TextureData textureData);
 
 private:
-	void UploadTextureToGPU();
-	void UploadCubeTextureToGPU();
+	void UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, TextureData textureData, VkTextureStagingBuffer staging, uint32_t width, uint32_t height);
 	TextureData textureData;
 };

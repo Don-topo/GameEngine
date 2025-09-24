@@ -136,7 +136,7 @@ void VertexBuffer::UploadToGPU(VkDevice device, VkCommandPool commandPool, VkQue
 	// TODO After this I need to delete this commandBuffer to avoid a memory leak?
 }
 
-void VertexBuffer::Cleanup(VmaAllocator allocator)
+void VertexBuffer::Cleanup(VmaAllocator& allocator)
 {
 	vmaDestroyBuffer(allocator, vertexBufferData.stagingBuffer, vertexBufferData.stagingBufferAlloc);
 	vmaDestroyBuffer(allocator, vertexBufferData.buffer, vertexBufferData.bufferAlloc);

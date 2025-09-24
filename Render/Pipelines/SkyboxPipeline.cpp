@@ -24,8 +24,8 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	fragmentShaderStageInfo.module = fragmentShader->GetShader();
 	fragmentShaderStageInfo.pName = "main";
 	
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertexShaderStageInfo, fragmentShaderStageInfo };
-	VkVertexInputBindingDescription vertexBindings[] = {{0, static_cast<uint32_t>(sizeof(SkyboxVertex)), VK_VERTEX_INPUT_RATE_VERTEX}};
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStages = { vertexShaderStageInfo, fragmentShaderStageInfo };
+	std::vector<VkVertexInputBindingDescription> vertexBindings = {{0, static_cast<uint32_t>(sizeof(SkyboxVertex)), VK_VERTEX_INPUT_RATE_VERTEX}};
 
 	// Vertex input => vertexAttributes + vertexBindings
 	VkVertexInputAttributeDescription attributeDescription = {};
@@ -39,8 +39,8 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputStateInfo.vertexAttributeDescriptionCount = 1;
 	vertexInputStateInfo.pVertexAttributeDescriptions = &attributeDescription;
-	vertexInputStateInfo.vertexBindingDescriptionCount = sizeof(vertexBindings);
-	vertexInputStateInfo.pVertexBindingDescriptions = vertexBindings;
+	vertexInputStateInfo.vertexBindingDescriptionCount = vertexBindings.size();
+	vertexInputStateInfo.pVertexBindingDescriptions = vertexBindings.data();
 
 	// Input assembly
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo = {};
@@ -104,21 +104,21 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	colorBlendStateInfo.blendConstants[3] = 0.f;
 
 	// Dynamic state
-	VkDynamicState dynamicStates[] = {
+	std::vector<VkDynamicState> dynamicStates = {
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_SCISSOR
 	};
 
 	VkPipelineDynamicStateCreateInfo dynamicStateInfo = {};
 	dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicStateInfo.dynamicStateCount = 2;
-	dynamicStateInfo.pDynamicStates = dynamicStates;
+	dynamicStateInfo.dynamicStateCount = dynamicStates.size();
+	dynamicStateInfo.pDynamicStates = dynamicStates.data();
 
 	// Creation of the actual pipeline
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineCreateInfo.stageCount = 2;
-	pipelineCreateInfo.pStages = shaderStages;
+	pipelineCreateInfo.pStages = shaderStages.data();
 	pipelineCreateInfo.pVertexInputState = &vertexInputStateInfo;
 	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateInfo;
 	pipelineCreateInfo.pViewportState = &viewportStateInfo;

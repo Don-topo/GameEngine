@@ -248,7 +248,7 @@ void RenderManager::Cleanup()
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Pool destroyed!");
 	vkDestroyImageView(device.device, depthImageView, nullptr);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Image View destroyed!");
-	vkDestroyImage(device.device, depthImage, nullptr);
+	vmaDestroyImage(allocator, depthImage, depthImageAllocation);
 	DEV_LOG(TE_INFO, "RenderManager", "Image destroyed!");
 	vmaDestroyAllocator(allocator);
 	DEV_LOG(TE_INFO, "RenderManager", "VMA Allocator destroyed!");	

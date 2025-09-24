@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <VkBootstrap.h>
 #include <string>
+#include <vector>
 #include <memory>
 #include <glm/glm.hpp>
 

@@ -1,13 +1,16 @@
 #include "PipelineLayout.h"
 
-void PipelineLayout::Initialization(VkDevice device, VkDescriptorSetLayout descriptorLayouts[], VkPushConstantRange pushConstants[])
+void PipelineLayout::Initialization(VkDevice device, std::vector<VkDescriptorSetLayout> descriptorLayouts, std::vector<VkPushConstantRange> pushConstants)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(sizeof(descriptorLayouts));
-	pipelineLayoutInfo.pSetLayouts = descriptorLayouts;
-	pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(sizeof(pushConstants));
-	pipelineLayoutInfo.pPushConstantRanges = pushConstants;
+	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorLayouts.size());
+	pipelineLayoutInfo.pSetLayouts = descriptorLayouts.data();
+	if (pushConstants.size() > 0)
+	{
+		pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstants.size());
+		pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
+	}	
 
 	DEV_ASSERT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "PipelineLayout", "Error creating the PipelineLayout!");
 	DEV_LOG(TE_INFO, "PipelineLayout", "PipelineLayout created!");

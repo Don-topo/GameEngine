@@ -11,7 +11,7 @@ void Shader::LoadShader(VkDevice device, std::string fileName)
 	shaderModuleCreateInfo.codeSize = shaderContent.size();
 	shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderContent.c_str());
 
-	DEV_ASSERT(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule), "Shader", "Error creating the shader module!");
+	DEV_ASSERT(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS, "Shader", "Error creating the shader module!");
 }
 
 void Shader::Cleanup(VkDevice device)

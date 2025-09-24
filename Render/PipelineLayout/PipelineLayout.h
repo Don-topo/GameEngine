@@ -2,11 +2,12 @@
 
 #include "../../Logger/Logger.h"
 #include <vulkan/vulkan.h>
+#include <vector>
 
 class PipelineLayout
 {
 public:
-	void Initialization(VkDevice device, VkDescriptorSetLayout descriptorLayouts[], VkPushConstantRange pushConstants[] = {});
+	void Initialization(VkDevice device, std::vector<VkDescriptorSetLayout> descriptorLayouts, std::vector<VkPushConstantRange> pushConstants = {});
 	VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }
 	void Cleanup(VkDevice device);
 

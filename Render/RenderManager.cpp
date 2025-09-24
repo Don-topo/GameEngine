@@ -171,6 +171,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
 
 	DEV_ASSERT(vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, nullptr, &descriptorPool) == VK_SUCCESS, "RenderManager", "Error creating the Descriptor Pool!");
+	DEV_LOG(TE_INFO, "RenderManager", "DescriptorPool created!");
 
 		// TODO Descriptor layouts
 	// Skybox
@@ -187,6 +188,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyBoxLayoutCreateInfo.pBindings = &skyBoxLayoutBinding;
 
 	DEV_ASSERT(vkCreateDescriptorSetLayout(device.device, &skyBoxLayoutCreateInfo, nullptr, &skyBoxDescriptorSetLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor set for the sky box!");
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Layout created!");
 
 		// TODO Descriptor sets
 	VkDescriptorSetAllocateInfo skyBoxAllocate = {};
@@ -196,6 +198,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyBoxAllocate.pSetLayouts = &skyBoxDescriptorSetLayout;
 
 	DEV_ASSERT(vkAllocateDescriptorSets(device.device, &skyBoxAllocate, &skyBoxDescriptorSet) == VK_SUCCESS, "RenderManager", "Error allocating sky box description set!");
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set created!");
 
 	// TODO RenderPass
 	renderPass.Initialization(device.device, swapchain.image_format, depthFormat);
@@ -204,17 +207,17 @@ void RenderManager::Initialization(SDL_Window* window)
 	// Skybox
 	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
 	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
-	VkDescriptorSetLayout skyboxLayouts[] =
+	std::vector<VkDescriptorSetLayout> skyboxLayouts =
 	{
 		rdAssimpTextureDescriptorLayout,
 		rdSkyboxDescriptorLayout
 	};
-	//skyboxLayout.Initialization(device, skyboxLayouts);
+	skyboxLayout.Initialization(device, skyboxLayouts);
 	// TODO Pipeline
 	// Skybox
 	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
 	std::string fragmentShaderFileName = "Shader/skybox.frag.spv";
-	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderpass, vertexShaderFileName, fragmentShaderFileName);
+	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
 	
 	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer

@@ -132,7 +132,7 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	pipelineCreateInfo.subpass = 0;
 	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	DEV_ASSERT(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline), "SkyboxPipeline", "Error creating the Skybox graphics pipeline!");
+	DEV_ASSERT(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline) == VK_SUCCESS, "SkyboxPipeline", "Error creating the Skybox graphics pipeline!");
 
 	// Destroy shader no longer need the objects
 	vertexShader->Cleanup(device);

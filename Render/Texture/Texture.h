@@ -7,6 +7,8 @@
 #include <string>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stbi-src/stb_image.h"
+#include <vector>
+#include "../CommandBuffer/CommandBuffer.h"
 
 struct TextureData {
 	VkImage image = VK_NULL_HANDLE;
@@ -26,10 +28,10 @@ struct VkTextureStagingBuffer {
 class Texture
 {
 public:
-	void LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, std::string textureFilename, bool flipImage);
+	void LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage);
 	void Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device, TextureData textureData);
 
 private:
-	void UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, TextureData textureData, VkTextureStagingBuffer staging, uint32_t width, uint32_t height);
+	void UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height);
 	TextureData textureData;
 };

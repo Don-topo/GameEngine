@@ -11,5 +11,5 @@ public:
 	void Cleanup(VkDevice device);
 
 private:
-	VkPipelineLayout pipelineLayout;
+	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 };

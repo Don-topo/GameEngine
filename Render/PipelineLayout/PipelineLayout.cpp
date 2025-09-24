@@ -9,7 +9,7 @@ void PipelineLayout::Initialization(VkDevice device, VkDescriptorSetLayout descr
 	pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(sizeof(pushConstants));
 	pipelineLayoutInfo.pPushConstantRanges = pushConstants;
 
-	DEV_ASSERT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout), "PipelineLayout", "Error creating the PipelineLayout!");
+	DEV_ASSERT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "PipelineLayout", "Error creating the PipelineLayout!");
 	DEV_LOG(TE_INFO, "PipelineLayout", "PipelineLayout created!");
 }
 

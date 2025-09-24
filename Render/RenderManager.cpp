@@ -70,6 +70,10 @@ void RenderManager::Initialization(SDL_Window* window)
 	DEV_ASSERT(presentQueueResult.has_value(), "RenderManager", "Failed to get Present queue result!");
 	presentQueue = presentQueueResult.value();
 
+	vkb::Result<VkQueue> computeQueueResult = device.get_queue(vkb::QueueType::compute);
+	DEV_ASSERT(computeQueueResult.has_value(), "RenderManager", "Failed to get Compute queue result!");
+	computeQueue = computeQueueResult.value();
+
 	DEV_LOG(TE_INFO, "RenderManager", "Queues created!");
 
 
@@ -97,31 +101,106 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	DEV_LOG(TE_INFO, "RenderManager", "Swapchain created!");
 
+	// Create DepthBuffer
+	VkExtent3D depthImageExtent = {
+		swapchain.extent.width,
+		swapchain.extent.height,
+		1
+	};
+
+	depthFormat = VK_FORMAT_D32_SFLOAT;
+
+	VkImageCreateInfo depthImageCreateInfo = {};
+	depthImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	depthImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	depthImageCreateInfo.format = depthFormat;
+	depthImageCreateInfo.extent = depthImageExtent;
+	depthImageCreateInfo.mipLevels = 1;
+	depthImageCreateInfo.arrayLayers = 1;
+	depthImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	depthImageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+	VmaAllocationCreateInfo depthAllocationCreateInfo = {};
+	depthAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+	depthAllocationCreateInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	DEV_ASSERT(vmaCreateImage(allocator, &depthImageCreateInfo, &depthAllocationCreateInfo, &depthImage, &depthImageAllocation, nullptr) == VK_SUCCESS, "RenderManager", "Error creating Depth image!");
+
+	VkImageViewCreateInfo depthImageViewCreateInfo = {};
+	depthImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	depthImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	depthImageViewCreateInfo.image = depthImage;
+	depthImageViewCreateInfo.format = depthFormat;
+	depthImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+	depthImageViewCreateInfo.subresourceRange.levelCount = 1;
+	depthImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+	depthImageViewCreateInfo.subresourceRange.layerCount = 1;
+	depthImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+	DEV_ASSERT(vkCreateImageView(device.device, &depthImageViewCreateInfo, nullptr, &depthImageView) == VK_SUCCESS, "RenderManager", "Error creating depth image view!");
+
 	// Create CommandPool (Graphics + Compute)
 	graphicsCommandPool.Initialization(device, vkb::QueueType::graphics);
 	computeCommandPool.Initialization(device, vkb::QueueType::compute);
 
 	// Create CommandBuffer
-	commandBuffer.Initialization(device, graphicsCommandPool.GetCommandPool());
+	commandBuffer.Initialization(device.device, graphicsCommandPool.GetCommandPool());
 	
-	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
-	// Create Framebuffer
-	//framebuffer.Initialization(device, swapchain);
+	// Create vertex Buffers
+	skyboxVertexBuffer.Initialization(allocator, 1024);
 
-	// TODO Create semaphores to sync GPU and CPU (fences)
-	fences.Initialization(device);
-	semaphores.Initialization(device);
-	// TODO DepthBuffer
-	// TODO VertexBuffer
-
-	// TODO Create matrix to apply translations and rotations
+	// Create createMatrixUBO
+	// Create createSSBOs
 	// TODO Descriptors
 		// TODO Descriptor pool
+	std::vector<VkDescriptorPoolSize> poolSizes =
+	{
+	  { VK_DESCRIPTOR_TYPE_SAMPLER, 10000 },
+	  { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10000 },
+	  { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 10000 },
+	  { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+	  { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+	  { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+	};
+
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
+	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	descriptorPoolCreateInfo.maxSets = 10000;
+	descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
+
+	DEV_ASSERT(vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, nullptr, &descriptorPool) == VK_SUCCESS, "RenderManager", "Error creating the Descriptor Pool!");
+
 		// TODO Descriptor layouts
+	// Skybox
+	VkDescriptorSetLayoutBinding skyBoxLayoutBinding = {};
+	skyBoxLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	skyBoxLayoutBinding.binding = 0;
+	skyBoxLayoutBinding.descriptorCount = 1;
+	skyBoxLayoutBinding.pImmutableSamplers = nullptr;
+	skyBoxLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutCreateInfo skyBoxLayoutCreateInfo = {};
+	skyBoxLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	skyBoxLayoutCreateInfo.bindingCount = 1;
+	skyBoxLayoutCreateInfo.pBindings = &skyBoxLayoutBinding;
+
+	DEV_ASSERT(vkCreateDescriptorSetLayout(device.device, &skyBoxLayoutCreateInfo, nullptr, &skyBoxDescriptorSetLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor set for the sky box!");
+
 		// TODO Descriptor sets
+	VkDescriptorSetAllocateInfo skyBoxAllocate = {};
+	skyBoxAllocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	skyBoxAllocate.descriptorPool = descriptorPool;
+	skyBoxAllocate.descriptorSetCount = 1;
+	skyBoxAllocate.pSetLayouts = &skyBoxDescriptorSetLayout;
+
+	DEV_ASSERT(vkAllocateDescriptorSets(device.device, &skyBoxAllocate, &skyBoxDescriptorSet) == VK_SUCCESS, "RenderManager", "Error allocating sky box description set!");
+
 	// TODO RenderPass
-	//renderPass.Initialization(device)
-	// TODO Pipeline layout
+	renderPass.Initialization(device.device, swapchain.image_format, depthFormat);
+
+		// TODO Pipeline layout
 	// Skybox
 	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
 	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
@@ -136,18 +215,44 @@ void RenderManager::Initialization(SDL_Window* window)
 	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
 	std::string fragmentShaderFileName = "Shader/skybox.frag.spv";
 	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderpass, vertexShaderFileName, fragmentShaderFileName);
+	
+	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
+	// Create Framebuffer
+	//framebuffer.Initialization(device, swapchain);
+
+	// Create semaphores to sync GPU and CPU (fences)
+	fences.Initialization(device.device);
+	semaphores.Initialization(device.device);
+
+	// TODO Create matrix to apply translations and rotations
+
 
 }
 
 void RenderManager::Cleanup()
 {	
-	fences.Cleanup(device);
-	semaphores.Cleanup(device);
-	framebuffer.Cleanup(device);
-	commandBuffer.Cleanup(device);
+	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting the device to be idling!");
+	fences.Cleanup(device.device);
+	semaphores.Cleanup(device.device);
+	framebuffer.Cleanup(device.device);
+	commandBuffer.Cleanup(device.device);
 	graphicsCommandPool.Cleanup(device.device);
 	computeCommandPool.Cleanup(device.device);
-	swapchain.destroy_image_views(swapchainImageViews);
+	skyboxVertexBuffer.Cleanup(allocator);	
+	renderPass.Cleanup(device.device);
+	vkFreeDescriptorSets(device.device, descriptorPool, 1, &skyBoxDescriptorSet);
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Sets destroyed!");
+	vkDestroyDescriptorSetLayout(device.device, skyBoxDescriptorSetLayout, nullptr);
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set Layout destroyed!");
+	vkDestroyDescriptorPool(device.device, descriptorPool, nullptr);
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Pool destroyed!");
+	vkDestroyImageView(device.device, depthImageView, nullptr);
+	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Image View destroyed!");
+	vkDestroyImage(device.device, depthImage, nullptr);
+	DEV_LOG(TE_INFO, "RenderManager", "Image destroyed!");
+	vmaDestroyAllocator(allocator);
+	DEV_LOG(TE_INFO, "RenderManager", "VMA Allocator destroyed!");	
+	swapchain.destroy_image_views(swapchainImageViews);	
 	DEV_LOG(TE_INFO, "RenderManager", "Swapchain Image Views destroyed!");
 	vkb::destroy_swapchain(swapchain);
 	DEV_LOG(TE_INFO, "RenderManager", "Swapchain destroyed!");

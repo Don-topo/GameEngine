@@ -13,7 +13,7 @@ void VertexBuffer::Initialization(VmaAllocator allocator, unsigned int bufferSiz
 	VmaAllocationCreateInfo bufferAllocationCreateInfo = {};
 	bufferAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &bufferCreateInfo, &bufferAllocationCreateInfo, &vertexBufferData.buffer, &vertexBufferData.bufferAlloc, nullptr), "VertexBuffer", "Error allocating the Vertex Buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &bufferCreateInfo, &bufferAllocationCreateInfo, &vertexBufferData.buffer, &vertexBufferData.bufferAlloc, nullptr) == VK_SUCCESS, "VertexBuffer", "Error allocating the Vertex Buffer!");
 
 	// Staging
 	VkBufferCreateInfo stagingBufferCreateInfo = {};
@@ -24,7 +24,7 @@ void VertexBuffer::Initialization(VmaAllocator allocator, unsigned int bufferSiz
 	VmaAllocationCreateInfo stagingAllocationCreateInfo = {};
 	stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &stagingAllocationCreateInfo, &vertexBufferData.stagingBuffer, &vertexBufferData.stagingBufferAlloc, nullptr), "VertexBuffer", "Error creating Staging Vertex Buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &stagingAllocationCreateInfo, &vertexBufferData.stagingBuffer, &vertexBufferData.stagingBufferAlloc, nullptr) == VK_SUCCESS, "VertexBuffer", "Error creating Staging Vertex Buffer!");
 
 	vertexBufferData.bufferSize = bufferSize;
 
@@ -42,7 +42,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	}
 
 	void* data;
-	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error allocating memory!");
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data) == VK_SUCCESS, "VertexBuffer", "Error allocating memory!");
 	std::memcpy(data, vertexData.vertices.data(), dataSize);
 	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
 	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, dataSize);
@@ -62,7 +62,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	}
 
 	void* data;
-	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping the vertex buffer!");
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data) == VK_SUCCESS, "VertexBuffer", "Error mapping the vertex buffer!");
 	std::memcpy(data, vertexData.vertices.data(), vertexDataSize);
 	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
 	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);
@@ -82,7 +82,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	}
 
 	void* data;
-	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping vertex buffer!");
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data) == VK_SUCCESS, "VertexBuffer", "Error mapping vertex buffer!");
 	std::memcpy(data, vertexData.vertices.data(), vertexDataSize);
 	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
 	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);
@@ -102,7 +102,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	}
 
 	void* data;
-	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data), "VertexBuffer", "Error mapping vertex buffer!");
+	DEV_ASSERT(vmaMapMemory(allocator, vertexBufferData.stagingBufferAlloc, &data) == VK_SUCCESS, "VertexBuffer", "Error mapping vertex buffer!");
 	std::memcpy(data, vertexData.data(), vertexDataSize);
 	vmaUnmapMemory(allocator, vertexBufferData.stagingBufferAlloc);
 	vmaFlushAllocation(allocator, vertexBufferData.stagingBufferAlloc, 0, vertexDataSize);

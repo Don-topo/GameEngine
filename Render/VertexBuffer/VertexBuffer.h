@@ -7,6 +7,7 @@
 #include "../../Logger/Logger.h"
 #include "../IndexBuffer/IndexBuffer.h"
 #include "../CommandBuffer/CommandBuffer.h"
+#include "../Pipelines/SkyboxPipeline.h"
 
 struct VertexBufferData {
 	unsigned int bufferSize = 0;
@@ -27,14 +28,6 @@ struct LineVertex {
 
 struct LineMesh {
 	std::vector<LineVertex> vertices{};
-};
-
-struct SkyboxVertex {
-	glm::vec4 position = glm::vec4(0.0f);
-};
-
-struct SkyboxMesh {
-	std::vector<SkyboxVertex> vertices{};
 };
 
 class VertexBuffer

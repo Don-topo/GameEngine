@@ -53,19 +53,19 @@ void RenderPass::Initialization(VkDevice device, VkFormat imageFormat, VkFormat 
 	depthDependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	depthDependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-	VkSubpassDependency dependencies[] = { subpassDependency, depthDependency };
-	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
+	std::vector<VkSubpassDependency> dependencies = { subpassDependency, depthDependency };
+	std::vector<VkAttachmentDescription> attachments = { colorAttachment, depthAttachment };
 
 	VkRenderPassCreateInfo renderPassCreateInfo = {};
 	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(sizeof(attachments));
-	renderPassCreateInfo.pAttachments = attachments;
+	renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	renderPassCreateInfo.pAttachments = attachments.data();
 	renderPassCreateInfo.subpassCount = 1;
 	renderPassCreateInfo.pSubpasses = &subpassDescription;
-	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(sizeof(dependencies));
-	renderPassCreateInfo.pDependencies = dependencies;
+	renderPassCreateInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	renderPassCreateInfo.pDependencies = dependencies.data();
 
-	DEV_ASSERT(vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &renderPass), "RenderPass", "Error creating the RenderPass!");
+	DEV_ASSERT(vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &renderPass) == VK_SUCCESS, "RenderPass", "Error creating the RenderPass!");
 	DEV_LOG(TE_INFO, "RenderPass", "RenderPass created!");
 }
 

@@ -16,6 +16,8 @@
 #include "Syncronization/SyncFences.h"
 #include "Syncronization/SyncSemaphores.h"
 #include "RenderPass/RenderPass.h"
+#include "VertexBuffer/VertexBuffer.h"
+//#include "Texture/Texture.h"
 
 class RenderManager
 {
@@ -31,6 +33,7 @@ private:
 	VmaAllocator allocator;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+	VkQueue computeQueue;
 	vkb::Swapchain swapchain;
 	std::vector<VkImage> swapchainImages;
 	std::vector<VkImageView> swapchainImageViews;
@@ -43,4 +46,12 @@ private:
 	SyncFences fences;
 	SyncSemaphores semaphores;
 	RenderPass renderPass;
+	VkFormat depthFormat = VK_FORMAT_UNDEFINED;
+	VkImage depthImage = VK_NULL_HANDLE;
+	VmaAllocation depthImageAllocation = VK_NULL_HANDLE;
+	VkImageView depthImageView = VK_NULL_HANDLE;
+	VertexBuffer skyboxVertexBuffer;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout skyBoxDescriptorSetLayout;
+	VkDescriptorSet skyBoxDescriptorSet;
 };

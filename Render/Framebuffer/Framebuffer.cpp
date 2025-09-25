@@ -1,6 +1,6 @@
 #include "Framebuffer.h"
 
-void Framebuffer::Initialization(VkDevice device, vkb::Swapchain swapchain)
+void Framebuffer::Initialization(VkDevice device, VkRenderPass renderPass, VkImageView imageView, vkb::Swapchain swapchain)
 {
 	unsigned int swapchainImageViewSize = swapchain.get_image_views().value().size();
 
@@ -10,12 +10,11 @@ void Framebuffer::Initialization(VkDevice device, vkb::Swapchain swapchain)
 	// Create a framebuffer for every imageView
 	for (unsigned int i = 0; i < swapchainImageViewSize; i++)
 	{
-		std::vector<VkImageView> imagesToAttach = { swapchain.get_image_views().value().at(i) };
+		std::vector<VkImageView> imagesToAttach = { swapchain.get_image_views().value().at(i), imageView };
 
 		VkFramebufferCreateInfo framebufferCreateInfo = {};
-		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		// TODO Pass VkRenderPass
-		framebufferCreateInfo.renderPass;
+		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;		
+		framebufferCreateInfo.renderPass = renderPass;
 		framebufferCreateInfo.pAttachments = imagesToAttach.data();
 		framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(imagesToAttach.size());
 		framebufferCreateInfo.width = swapchain.extent.width;

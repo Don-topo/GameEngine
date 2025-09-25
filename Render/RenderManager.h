@@ -54,4 +54,6 @@ private:
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout skyBoxDescriptorSetLayout;
 	VkDescriptorSet skyBoxDescriptorSet;
+	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
+	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
 };

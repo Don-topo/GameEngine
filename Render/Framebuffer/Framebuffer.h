@@ -8,7 +8,7 @@
 class Framebuffer
 {
 public:
-	void Initialization(VkDevice device, vkb::Swapchain swapchain);
+	void Initialization(VkDevice device, VkRenderPass renderPass, VkImageView imageView, vkb::Swapchain swapchain);
 	void Cleanup(VkDevice device);
 private:
 	std::vector<VkFramebuffer> framebuffers;

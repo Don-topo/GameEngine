@@ -4,7 +4,7 @@
 
 void Shader::LoadShader(VkDevice device, std::string fileName)
 {
-	std::string shaderContent = FileManager::LoadFile(fileName);
+	std::string shaderContent = FileManager::LoadFile("C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\" + fileName);
 
 	VkShaderModuleCreateInfo shaderModuleCreateInfo = {};
 	shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

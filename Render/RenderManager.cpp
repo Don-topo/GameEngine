@@ -174,6 +174,38 @@ void RenderManager::Initialization(SDL_Window* window)
 	DEV_LOG(TE_INFO, "RenderManager", "DescriptorPool created!");
 
 		// TODO Descriptor layouts
+	/* texture */
+	VkDescriptorSetLayoutBinding assimpTextureBind{};
+	assimpTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	assimpTextureBind.binding = 0;
+	assimpTextureBind.descriptorCount = 1;
+	assimpTextureBind.pImmutableSamplers = nullptr;
+	assimpTextureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	std::vector<VkDescriptorSetLayoutBinding> assimpTexBindings = { assimpTextureBind };
+
+	VkDescriptorSetLayoutCreateInfo assimpTextureCreateInfo{};
+	assimpTextureCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	assimpTextureCreateInfo.bindingCount = static_cast<uint32_t>(assimpTexBindings.size());
+	assimpTextureCreateInfo.pBindings = assimpTexBindings.data();
+
+	DEV_ASSERT(vkCreateDescriptorSetLayout(device.device, &assimpTextureCreateInfo, nullptr, &rdAssimpTextureDescriptorLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor set Layout for texture");
+
+	/* skybox shader */
+	VkDescriptorSetLayoutBinding assimpUboBind{};
+	assimpUboBind.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	assimpUboBind.binding = 0;
+	assimpUboBind.descriptorCount = 1;
+	assimpUboBind.pImmutableSamplers = nullptr;
+	assimpUboBind.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutCreateInfo assimpSkyboxCreateInfo{};
+	assimpSkyboxCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	assimpSkyboxCreateInfo.bindingCount = 1;
+	assimpSkyboxCreateInfo.pBindings = &assimpUboBind;
+
+	DEV_ASSERT(vkCreateDescriptorSetLayout(device, &assimpSkyboxCreateInfo, nullptr, &rdSkyboxDescriptorLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor layout to skybox!");
+
 	// Skybox
 	VkDescriptorSetLayoutBinding skyBoxLayoutBinding = {};
 	skyBoxLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -195,7 +227,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyBoxAllocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	skyBoxAllocate.descriptorPool = descriptorPool;
 	skyBoxAllocate.descriptorSetCount = 1;
-	skyBoxAllocate.pSetLayouts = &skyBoxDescriptorSetLayout;
+	skyBoxAllocate.pSetLayouts = &rdSkyboxDescriptorLayout;
 
 	DEV_ASSERT(vkAllocateDescriptorSets(device.device, &skyBoxAllocate, &skyBoxDescriptorSet) == VK_SUCCESS, "RenderManager", "Error allocating sky box description set!");
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set created!");
@@ -205,8 +237,7 @@ void RenderManager::Initialization(SDL_Window* window)
 
 		// TODO Pipeline layout
 	// Skybox
-	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
-	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
+	
 	std::vector<VkDescriptorSetLayout> skyboxLayouts =
 	{
 		rdAssimpTextureDescriptorLayout,
@@ -216,12 +247,12 @@ void RenderManager::Initialization(SDL_Window* window)
 	// TODO Pipeline
 	// Skybox
 	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
-	std::string fragmentShaderFileName = "Shader/skybox.frag.spv";
-	//skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
+	std::string fragmentShaderFileName = "Shaders/skybox.frag.spv";
+	skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
 	
 	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer
-	//framebuffer.Initialization(device, swapchain);
+	framebuffer.Initialization(device.device, renderPass.GetRenderPass(), depthImageView, swapchain);
 
 	// Create semaphores to sync GPU and CPU (fences)
 	fences.Initialization(device.device);
@@ -237,15 +268,21 @@ void RenderManager::Cleanup()
 	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting the device to be idling!");
 	fences.Cleanup(device.device);
 	semaphores.Cleanup(device.device);
-	framebuffer.Cleanup(device.device);
 	commandBuffer.Cleanup(device.device);
+	framebuffer.Cleanup(device.device);
 	graphicsCommandPool.Cleanup(device.device);
 	computeCommandPool.Cleanup(device.device);
 	skyboxVertexBuffer.Cleanup(allocator);	
+	skyboxPipeline.Cleanup(device.device);
+	skyboxLayout.Cleanup(device);
 	renderPass.Cleanup(device.device);
 	vkFreeDescriptorSets(device.device, descriptorPool, 1, &skyBoxDescriptorSet);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Sets destroyed!");
+
 	vkDestroyDescriptorSetLayout(device.device, skyBoxDescriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(device.device, rdAssimpTextureDescriptorLayout, nullptr);
+	vkDestroyDescriptorSetLayout(device.device, rdSkyboxDescriptorLayout, nullptr);
+
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set Layout destroyed!");
 	vkDestroyDescriptorPool(device.device, descriptorPool, nullptr);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Pool destroyed!");

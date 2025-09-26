@@ -21,6 +21,7 @@ class SkyboxPipeline
 {
 public:
 	void Initialization(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderpass, std::string vertexShaderFilename, std::string fragmentShaderFilename);
+	VkPipeline GetSkyboxPipeline() { return pipeline; }
 	void Cleanup(VkDevice device);
 
 private:

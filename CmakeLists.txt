@@ -146,12 +146,14 @@ file(GLOB SOURCES
     Camera/*.cpp
     Render/*.h
     Render/*.cpp
-    Render/Shader/*h
-    Render/Shader/*cpp
-    Render/CommandBuffer/*h
-    Render/CommandBuffer/*cpp
-    Render/CommandPool/*h
-    Render/CommandPool/*cpp
+    Render/Shader/*.h
+    Render/Shader/*.cpp
+    Render/Device/*.h
+    Render/Device/*.cpp
+    Render/CommandBuffer/*.h
+    Render/CommandBuffer/*.cpp
+    Render/CommandPool/*.h
+    Render/CommandPool/*.cpp
     Render/Framebuffer/*.h
     Render/Framebuffer/*.cpp
     Render/Swapchain/*.h

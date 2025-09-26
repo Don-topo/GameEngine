@@ -204,7 +204,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	assimpSkyboxCreateInfo.bindingCount = 1;
 	assimpSkyboxCreateInfo.pBindings = &assimpUboBind;
 
-	DEV_ASSERT(vkCreateDescriptorSetLayout(device, &assimpSkyboxCreateInfo, nullptr, &rdSkyboxDescriptorLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor layout to skybox!");
+	DEV_ASSERT(vkCreateDescriptorSetLayout(device.device, &assimpSkyboxCreateInfo, nullptr, &rdSkyboxDescriptorLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor layout to skybox!");
 
 	// Skybox
 	VkDescriptorSetLayoutBinding skyBoxLayoutBinding = {};
@@ -243,12 +243,12 @@ void RenderManager::Initialization(SDL_Window* window)
 		rdAssimpTextureDescriptorLayout,
 		rdSkyboxDescriptorLayout
 	};
-	skyboxLayout.Initialization(device, skyboxLayouts);
+	skyboxLayout.Initialization(device.device, skyboxLayouts);
 	// TODO Pipeline
 	// Skybox
 	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
 	std::string fragmentShaderFileName = "Shaders/skybox.frag.spv";
-	skyboxPipeline.Initialization(device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
+	skyboxPipeline.Initialization(device.device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
 	
 	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
 	// Create Framebuffer
@@ -263,18 +263,94 @@ void RenderManager::Initialization(SDL_Window* window)
 
 }
 
+void RenderManager::Update()
+{
+	// Wait for fences
+	std::vector<VkFence> fenc = { fences.GetRenderFence(), fences.GetComputeFence() };
+	DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT32_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
+
+	// Get the next Image
+	uint32_t currentIndexImage = 0;
+	VkResult result = vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT32_MAX, semaphores.GetPresentSemaphore(), VK_NULL_HANDLE, &currentIndexImage);
+
+	// Check if we need to recreate the swapchain
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		// TODO RecreateSwapchain
+	}
+	DEV_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "RenderManager", "Error obtaining the next swapchain image!");
+
+	// Reset fences before recording commands	
+	DEV_ASSERT(vkResetFences(device.device, 1, (VkFence*)fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
+
+	
+	// Render Graphics
+	DEV_ASSERT(vkResetFences(device.device, 1, (VkFence*)fences.GetRenderFence()), "RenderManager", "Error reseting the render fences!");
+	commandBuffer.Reset(0);
+	commandBuffer.BeginSingleShot();
+
+	std::vector<VkClearValue> colorClearValues = {};
+	VkClearValue colorClearValue;
+	colorClearValue.color = { { 0.25f, 0.25f, 0.25f, 1.0f } };
+	colorClearValues.push_back(colorClearValue);
+
+	VkClearValue depthValue;
+	depthValue.depthStencil.depth = 1.0f;
+
+	std::vector<VkClearValue> clearValues = {};
+	clearValues.insert(clearValues.end(), colorClearValues.begin(), colorClearValues.end());
+	clearValues.push_back(depthValue);
+
+	VkRenderPassBeginInfo renderPassBeginInfo = {};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.renderPass = renderPass.GetRenderPass();
+	renderPassBeginInfo.framebuffer = framebuffer.GetFrameBuffers().at(currentIndexImage);
+	renderPassBeginInfo.renderArea.offset = { 0, 0 };
+	renderPassBeginInfo.renderArea.extent = swapchain.extent;
+	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassBeginInfo.pClearValues = clearValues.data();
+
+	VkViewport viewport = {};
+	viewport.x = 0.f;
+	viewport.y = static_cast<float>(swapchain.extent.height);
+	viewport.width = static_cast<float>(swapchain.extent.width);
+	viewport.height = static_cast<float>(swapchain.extent.height);
+	viewport.minDepth = 0.f;
+	viewport.maxDepth = 1.f;
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0,0 };
+	scissor.extent = swapchain.extent;
+
+	vkCmdSetViewport(commandBuffer.GetCommandBuffer(), 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer.GetCommandBuffer(), 0, 1, &scissor);
+
+	vkCmdBeginRenderPass(commandBuffer.GetCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	// Draw skybox
+	vkCmdBindPipeline(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline.GetSkyboxPipeline());
+	// TODO Load skybox texture on initialization
+	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 0, 1, nullptr, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 1, 1, &skyBoxDescriptorSet, 0, nullptr);
+
+	VkDeviceSize sizeOffset = 0;
+	//vkCmdBindVertexBuffers(commandBuffer.GetCommandBuffer(), 0, 1, &skyboxVertexBuffer.GetVertexBuffer().buffer, &sizeOffset);
+	//vkCmdDraw()
+	
+}
+
 void RenderManager::Cleanup()
 {	
 	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting the device to be idling!");
 	fences.Cleanup(device.device);
 	semaphores.Cleanup(device.device);
-	commandBuffer.Cleanup(device.device);
-	framebuffer.Cleanup(device.device);
+	commandBuffer.Cleanup(device.device);	
 	graphicsCommandPool.Cleanup(device.device);
 	computeCommandPool.Cleanup(device.device);
 	skyboxVertexBuffer.Cleanup(allocator);	
+	framebuffer.Cleanup(device.device);
 	skyboxPipeline.Cleanup(device.device);
-	skyboxLayout.Cleanup(device);
+	skyboxLayout.Cleanup(device.device);
 	renderPass.Cleanup(device.device);
 	vkFreeDescriptorSets(device.device, descriptorPool, 1, &skyBoxDescriptorSet);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Sets destroyed!");

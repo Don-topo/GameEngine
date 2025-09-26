@@ -52,7 +52,7 @@ private:
 	VkImageView depthImageView = VK_NULL_HANDLE;
 	VertexBuffer skyboxVertexBuffer;
 	VkDescriptorPool descriptorPool;
-	VkDescriptorSetLayout skyBoxDescriptorSetLayout;
+	VkDescriptorSetLayout skyBoxDescriptorSetLayout = VK_NULL_HANDLE;
 	VkDescriptorSet skyBoxDescriptorSet;
 	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
 	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;

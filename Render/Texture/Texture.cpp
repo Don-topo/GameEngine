@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, TextureData texData, std::string textureFilename,
+void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, TextureData texData, std::string textureFilename,
 	bool generateMipmaps, bool flipImage)
 {
 	int texWidth;
@@ -42,7 +42,68 @@ void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, TextureData t
 
 	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocator, &dataToUpload), "Texture", "Error mapping the texture!");
 
-	std::memcpy()
+	std::memcpy(dataToUpload, data, textureSize);
+	vmaUnmapMemory(allocator, stagingAllocator);
+	vmaFlushAllocation(allocator, stagingAllocator, 0, textureSize);
+
+	stbi_image_free(data);
+
+	VkTextureStagingBuffer textureStagingBuffer = { stagingBuffer, stagingAllocator };
+
+	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, textureData, textureStagingBuffer, descriptorPool, descriptorSetLayout, texWidth, texHeight, generateMipmaps, mipmapLevels);
+}
+
+void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, TextureData textureData, aiTexel* texelData, std::string fileName, int width, int height, bool generateMipmaps, bool flipImage)
+{
+	int texWidth;
+	int texHeight;
+	int numberOfChannels;
+	uint32_t mipmapLevels = 1;
+
+	stbi_set_flip_vertically_on_load(flipImage);
+
+	unsigned char* data;
+	if (height == 0)
+	{
+		data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texelData), width, &texWidth, &texHeight, &numberOfChannels, STBI_rgb_alpha);
+	}
+	else
+	{
+		data = stbi_load_from_memory(reinterpret_cast<unsigned char*>(texelData), width * height, &texWidth, &texHeight, &numberOfChannels, STBI_rgb_alpha);
+	}
+
+	if (generateMipmaps)
+	{
+		mipmapLevels += static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight))));
+	}
+
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+	VkBufferCreateInfo stagingBufferCreateInfo = {};
+	stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	stagingBufferCreateInfo.size = imageSize;
+	stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingBufferAllocation;
+
+	VmaAllocationCreateInfo stagingAllocationCreateInfo = {};
+	stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &stagingAllocationCreateInfo, &stagingBuffer, &stagingBufferAllocation, nullptr), "Texture", "Error creating staging buffer!");
+
+	void* uploadData;
+	DEV_ASSERT(vmaMapMemory(allocator, stagingBufferAllocation, &uploadData), "Texture", "Error mapping the texture!");
+
+	std::memcpy(uploadData, data, imageSize);
+	vmaUnmapMemory(allocator, stagingBufferAllocation);
+	vmaFlushAllocation(allocator, stagingBufferAllocation, 0, imageSize);
+
+	stbi_image_free(data);
+
+	VkTextureStagingBuffer stagingData = { stagingBuffer, stagingBufferAllocation };
+
+	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, textureData, stagingData, descriptorPool, descriptorSetLayout, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), generateMipmaps, static_cast<uint32_t>(mipmapLevels));
 }
 
 void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage)
@@ -89,9 +150,103 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, textureData, stagingData, descriptorPool, descriptorSetLayout, texWidth, texHeight);
 }
 
-void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps)
+void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels)
 {
+	VkImageCreateInfo imageCreateInfo = {};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.extent.width = width;
+	imageCreateInfo.extent.height = height;
+	imageCreateInfo.extent.depth = 1.f;
+	imageCreateInfo.mipLevels = mipmapLevels;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
+	VmaAllocationCreateInfo allocationCreateInfo = {};
+	allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+	DEV_ASSERT(vmaCreateImage(allocator, &imageCreateInfo, &allocationCreateInfo, &textureData.image, &textureData.imageAlloc, nullptr), "Texture", "Error creating texture image!");
+
+	CommandBuffer uploadCommandBuffer;
+	uploadCommandBuffer.CreateSingleShotBuffer(device, commandPool);
+
+	VkImageSubresourceRange stagingSubreasourceRange = {};
+	stagingSubreasourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	stagingSubreasourceRange.baseMipLevel = 0;
+	stagingSubreasourceRange.levelCount = mipmapLevels;
+	stagingSubreasourceRange.baseArrayLayer = 0;
+	stagingSubreasourceRange.layerCount = 1;
+
+	VkImageMemoryBarrier stagingImageMemoryBarrier = {};
+	stagingImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	stagingImageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	stagingImageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	stagingImageMemoryBarrier.image = textureData.image;
+	stagingImageMemoryBarrier.subresourceRange = stagingSubreasourceRange;
+	stagingImageMemoryBarrier.srcAccessMask = 0;
+	stagingImageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+	VkExtent3D extend = {};
+	extend.height = height;
+	extend.width = width;
+	extend.depth = 1.f;
+
+	VkBufferImageCopy stagingBufferImageCopy = {};
+	stagingBufferImageCopy.bufferOffset = 0;
+	stagingBufferImageCopy.bufferRowLength = 0;
+	stagingBufferImageCopy.bufferImageHeight = 0;
+	stagingBufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	stagingBufferImageCopy.imageSubresource.mipLevel = 0;
+	stagingBufferImageCopy.imageSubresource.baseArrayLayer = 0;
+	stagingBufferImageCopy.imageSubresource.layerCount = 1;
+	stagingBufferImageCopy.imageExtent = extend;
+
+	VkImageMemoryBarrier shaderStagingImageMemoryBarrier = {};
+	shaderStagingImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	shaderStagingImageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	if (mipmapLevels > 1)
+	{
+		shaderStagingImageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	}
+	else
+	{
+		shaderStagingImageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	shaderStagingImageMemoryBarrier.image = textureData.image;
+	shaderStagingImageMemoryBarrier.subresourceRange = stagingSubreasourceRange;
+	shaderStagingImageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	shaderStagingImageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+	vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &shaderStagingImageMemoryBarrier);
+	vkCmdCopyBufferToImage(uploadCommandBuffer.GetCommandBuffer(), textureStagingBuffer.stagingBuffer, textureData.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &stagingBufferImageCopy);
+	vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &shaderStagingImageMemoryBarrier);
+
+	if (generateMipmaps)
+	{
+		VkImageSubresourceRange blitImageSubresourceRange = {};
+		blitImageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blitImageSubresourceRange.baseMipLevel = 0;
+		blitImageSubresourceRange.levelCount = 1;
+		blitImageSubresourceRange.baseArrayLayer = 0;
+		blitImageSubresourceRange.layerCount = 1;
+
+		VkImageMemoryBarrier firstBarrier = {};
+		firstBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		firstBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		firstBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		firstBarrier.image = textureData.image;
+		firstBarrier.subresourceRange = blitImageSubresourceRange;
+		firstBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		firstBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+		VkImageMemoryBarrier secondBarrier = {};
+		secondBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	}
 }
 
 void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height)

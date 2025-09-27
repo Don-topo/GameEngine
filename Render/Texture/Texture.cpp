@@ -1,5 +1,50 @@
 #include "Texture.h"
 
+void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, TextureData texData, std::string textureFilename,
+	bool generateMipmaps, bool flipImage)
+{
+	int texWidth;
+	int texHeight;
+	int numberOfChannels;
+	uint32_t mipmapLevels = 1;
+
+	stbi_set_flip_vertically_on_load(flipImage);
+
+	unsigned char* data = stbi_load(textureFilename.c_str(), &texWidth, &texHeight, &numberOfChannels, STBI_rgb_alpha);
+
+	if (data != nullptr)
+	{
+		stbi_image_free(data);
+		DEV_ASSERT(data != nullptr, "Texture", "Error loading the texture file %s", textureFilename.c_str());
+	}
+
+	if (generateMipmaps)
+	{
+		mipmapLevels += static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight))));
+	}
+
+	VkDeviceSize textureSize = texWidth * texHeight * 4;
+
+	VkBufferCreateInfo stagingBufferCreateInfo = {};
+	stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	stagingBufferCreateInfo.size = textureSize;
+	stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingAllocator;
+
+	VmaAllocationCreateInfo vmaStagingAllocatorCreateInfo = {};
+	vmaStagingAllocatorCreateInfo.usage = VMA_MEMORY_USAGE_CPU_COPY;
+
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &vmaStagingAllocatorCreateInfo, &stagingBuffer, &stagingAllocator, nullptr), "Texture", "Error allocating the texture buffer!");
+
+	void* dataToUpload;
+
+	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocator, &dataToUpload), "Texture", "Error mapping the texture!");
+
+	std::memcpy()
+}
+
 void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage)
 {
 	int texWidth;
@@ -42,6 +87,11 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 	VkTextureStagingBuffer stagingData = { stagingBuffer, stagingAllocation };
 
 	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, textureData, stagingData, descriptorPool, descriptorSetLayout, texWidth, texHeight);
+}
+
+void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps)
+{
+
 }
 
 void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height)

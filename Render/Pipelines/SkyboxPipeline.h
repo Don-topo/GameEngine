@@ -8,14 +8,7 @@
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
-
-struct SkyboxVertex {
-	glm::vec4 position = glm::vec4(0.0f);
-};
-
-struct SkyboxMesh {
-	std::vector<SkyboxVertex> vertices{};
-};
+#include "../../Animation/Models/Skybox/SkyboxModel.h"
 
 class SkyboxPipeline
 {

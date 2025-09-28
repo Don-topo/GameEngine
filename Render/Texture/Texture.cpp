@@ -246,6 +246,68 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 
 		VkImageMemoryBarrier secondBarrier = {};
 		secondBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		secondBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		secondBarrier.dstAccessMask = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		secondBarrier.image = textureData.image;
+		secondBarrier.subresourceRange = blitImageSubresourceRange;
+		secondBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		secondBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		VkImageBlit mipBlit = {};
+		mipBlit.srcOffsets[0] = { 0, 0, 0 };
+		mipBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		mipBlit.srcSubresource.baseArrayLayer = 0;
+		mipBlit.srcSubresource.layerCount = 1;
+		mipBlit.dstOffsets[0] = { 0, 0, 0 };
+		mipBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		mipBlit.dstSubresource.baseArrayLayer = 0;
+		mipBlit.dstSubresource.layerCount = 1;
+
+		int32_t mipHeight = height;
+		int32_t mipWidth = width;
+
+		for (int mipLevel = 1; mipLevel < mipmapLevels; mipLevel++)
+		{
+			mipBlit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+			mipBlit.srcSubresource.mipLevel = mipLevel - 1;
+
+			mipBlit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+			mipBlit.dstSubresource.mipLevel = mipLevel;
+
+			firstBarrier.subresourceRange.baseMipLevel = mipLevel - 1;
+
+			vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &firstBarrier);
+
+			vkCmdBlitImage(uploadCommandBuffer.GetCommandBuffer(), textureData.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, textureData.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &mipBlit, VK_FILTER_LINEAR);
+
+			secondBarrier.subresourceRange.baseMipLevel = mipLevel - 1;
+			vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &secondBarrier);
+
+			if (mipWidth > 1) {
+				mipWidth /= 2;
+			}
+			if (mipHeight > 1) {
+				mipHeight /= 2;
+			}			
+		}
+
+		if (mipmapLevels > 1)
+		{
+			VkImageMemoryBarrier lastBarrier = {};
+			lastBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			lastBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			lastBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			lastBarrier.image = textureData.image;
+			lastBarrier.subresourceRange = blitImageSubresourceRange;
+			lastBarrier.subresourceRange.baseMipLevel = mipmapLevels - 1;
+			lastBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			lastBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &lastBarrier);
+
+			uploadCommandBuffer.submitSingleShotBuffer(device, commandPool, queue);
+			//vmaDestroyBuffer(allocator, stag)
+		}
 	}
 }
 

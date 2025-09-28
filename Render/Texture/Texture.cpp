@@ -306,7 +306,71 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 			vkCmdPipelineBarrier(uploadCommandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &lastBarrier);
 
 			uploadCommandBuffer.submitSingleShotBuffer(device, commandPool, queue);
-			//vmaDestroyBuffer(allocator, stag)
+			vmaDestroyBuffer(allocator, textureStagingBuffer.stagingBuffer, textureStagingBuffer.stagingBufferAlloc);
+
+			VkImageViewCreateInfo textureImageViewCreateInfo = {};
+			textureImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			textureImageViewCreateInfo.image = textureData.image;
+			textureImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			textureImageViewCreateInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+			textureImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			textureImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+			textureImageViewCreateInfo.subresourceRange.levelCount = mipmapLevels;
+			textureImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+			textureImageViewCreateInfo.subresourceRange.layerCount = 1;
+
+			DEV_ASSERT(vkCreateImageView(device, &textureImageViewCreateInfo, nullptr, &textureData.imageView), "Texture", "Error creating the image view!");
+
+			VkPhysicalDeviceFeatures features = {};
+			vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+			const VkBool32 isAnisotropyAvailable = features.samplerAnisotropy;
+
+			VkPhysicalDeviceProperties properties = {};
+			vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+			const float maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+			VkSamplerCreateInfo textureSamplerCreateInfo = {};
+			textureSamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			textureSamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+			textureSamplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+			textureSamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			textureSamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			textureSamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			textureSamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			textureSamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+			textureSamplerCreateInfo.compareEnable = VK_FALSE;
+			textureSamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+			textureSamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			textureSamplerCreateInfo.mipLodBias = 0.f;
+			textureSamplerCreateInfo.minLod = 0.f;
+			textureSamplerCreateInfo.maxLod = static_cast<float>(mipmapLevels);
+			textureSamplerCreateInfo.anisotropyEnable = isAnisotropyAvailable;
+			textureSamplerCreateInfo.maxAnisotropy = maxAnisotropy;
+
+			DEV_ASSERT(vkCreateSampler(device, &textureSamplerCreateInfo, nullptr, &textureData.sampler), "Texture", "Error creating the texture sampler!");
+
+			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
+			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+			descriptorSetAllocateInfo.descriptorSetCount = 1;
+			descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+
+			DEV_ASSERT(vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &textureData.descriptorSet), "Texture", "Error creating the texture descriptor set!");
+
+			VkDescriptorImageInfo descriptorImageInfo = {};
+			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			descriptorImageInfo.imageView = textureData.imageView;
+			descriptorImageInfo.sampler = textureData.sampler;
+
+			VkWriteDescriptorSet writeDescriptorSet = {};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.dstSet = textureData.descriptorSet;
+			writeDescriptorSet.dstBinding = 0;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+
+			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 		}
 	}
 }
@@ -467,7 +531,6 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 
 void Texture::Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device, TextureData textureData)
 {
-
 	vkFreeDescriptorSets(device, descriptorPool, 1, &textureData.descriptorSet);
 	vkDestroySampler(device, textureData.sampler, nullptr);
 	vkDestroyImageView(device, textureData.imageView, nullptr);

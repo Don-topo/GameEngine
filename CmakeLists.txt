@@ -152,6 +152,8 @@ file(GLOB SOURCES
     Render/*.cpp
     Render/Shader/*.h
     Render/Shader/*.cpp
+    Render/ShaderStorageBuffer/*.h
+    Render/ShaderStorageBuffer/*.cpp
     Render/Device/*.h
     Render/Device/*.cpp
     Render/CommandBuffer/*.h

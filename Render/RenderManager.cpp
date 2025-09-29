@@ -2,9 +2,35 @@
 
 void RenderManager::Initialization(SDL_Window* window)
 {
+	this->window = window;
+
 	DEV_ASSERT(SDL_Vulkan_LoadLibrary(NULL), "RenderManager", "Failed to load Vulkan library!");
 
-	// Create vulkan instance with vk-bootstrap
+	InitializeDevice();
+	InitializeVMA();
+	InitializeQueues();
+	CreateSwapchain();
+	CreateDepthBuffer();
+	CreateCommandPools();
+	CreateCommandBuffers();
+	CreateVertexBuffers();
+	CreateDescriptorPool();
+	// Create createMatrixUBO
+	// Create createSSBOs
+	CreateDescriptorLayouts();
+	CreateDescriptorSets();
+	CreateRenderPass();
+	CreatePipelineLayouts();
+	CreatePipelines();
+	CreateFramebuffer();
+	// Create semaphores to sync GPU and CPU (fences)
+	CreateFences();
+	CreateSemaphores();
+}
+
+void RenderManager::InitializeDevice()
+{
+	// Vulkan instance with vk-bootstrap
 	vkb::InstanceBuilder builder;
 	vkb::Result<vkb::Instance> bInstance = builder.
 		use_default_debug_messenger().
@@ -47,21 +73,26 @@ void RenderManager::Initialization(SDL_Window* window)
 	DEV_LOG(TE_INFO, "RenderManager", "Physical device selected");
 	VkDeviceSize offsetAligment = physicalDevice.properties.limits.minStorageBufferOffsetAlignment;
 	offsetAligment = std::max(offsetAligment, sizeof(glm::mat4));
-	vkb::DeviceBuilder deviceBuilder { physicalDevice };
+	vkb::DeviceBuilder deviceBuilder{ physicalDevice };
 	vkb::Result<vkb::Device> deviceBuilderReturn = deviceBuilder.build();
 	DEV_ASSERT(deviceBuilderReturn.has_value(), "RenderManager", "Error creating the logic device!");
 	device = deviceBuilderReturn.value();
 	DEV_LOG(TE_INFO, "RenderManager", "Device created!");
+}
 
-	// Init VMA
+void RenderManager::InitializeVMA()
+{
 	VmaAllocatorCreateInfo allocatorInfo{};
 	allocatorInfo.physicalDevice = physicalDevice;
 	allocatorInfo.device = device.device;
 	allocatorInfo.instance = instance.instance;
 
-	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator) == VK_SUCCESS, "RenderManager", "Failed to initialize VMA!");	
+	DEV_ASSERT(vmaCreateAllocator(&allocatorInfo, &allocator) == VK_SUCCESS, "RenderManager", "Failed to initialize VMA!");
+}
 
-	// Create VK_QUEUES (Present + Compute)
+void RenderManager::InitializeQueues()
+{
+	// VK_QUEUES (Present + Compute)
 	vkb::Result<VkQueue> graphicsQueueResult = device.get_queue(vkb::QueueType::graphics);
 	DEV_ASSERT(graphicsQueueResult.has_value(), "RenderManager", "Failed to get Graphics queue result!");
 	graphicsQueue = graphicsQueueResult.value();
@@ -75,9 +106,10 @@ void RenderManager::Initialization(SDL_Window* window)
 	computeQueue = computeQueueResult.value();
 
 	DEV_LOG(TE_INFO, "RenderManager", "Queues created!");
+}
 
-
-	// Create Swapchain
+void RenderManager::CreateSwapchain()
+{
 	vkb::SwapchainBuilder swapChainBuilder{ device };
 	VkSurfaceFormatKHR surfaceFormat;
 
@@ -100,8 +132,10 @@ void RenderManager::Initialization(SDL_Window* window)
 	swapchainImageViews = swapChainBuildReturn.value().get_image_views().value();
 
 	DEV_LOG(TE_INFO, "RenderManager", "Swapchain created!");
+}
 
-	// Create DepthBuffer
+void RenderManager::CreateDepthBuffer()
+{
 	VkExtent3D depthImageExtent = {
 		swapchain.extent.width,
 		swapchain.extent.height,
@@ -138,21 +172,27 @@ void RenderManager::Initialization(SDL_Window* window)
 	depthImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
 	DEV_ASSERT(vkCreateImageView(device.device, &depthImageViewCreateInfo, nullptr, &depthImageView) == VK_SUCCESS, "RenderManager", "Error creating depth image view!");
+}
 
-	// Create CommandPool (Graphics + Compute)
+void RenderManager::CreateCommandPools()
+{
+	// CommandPool (Graphics + Compute)
 	graphicsCommandPool.Initialization(device, vkb::QueueType::graphics);
 	computeCommandPool.Initialization(device, vkb::QueueType::compute);
+}
 
-	// Create CommandBuffer
+void RenderManager::CreateCommandBuffers()
+{
 	commandBuffer.Initialization(device.device, graphicsCommandPool.GetCommandPool());
-	
-	// Create vertex Buffers
-	skyboxVertexBuffer.Initialization(allocator, 1024);
+}
 
-	// Create createMatrixUBO
-	// Create createSSBOs
-	// TODO Descriptors
-		// TODO Descriptor pool
+void RenderManager::CreateVertexBuffers()
+{
+	skyboxVertexBuffer.Initialization(allocator, 1024);
+}
+
+void RenderManager::CreateDescriptorPool()
+{
 	std::vector<VkDescriptorPoolSize> poolSizes =
 	{
 	  { VK_DESCRIPTOR_TYPE_SAMPLER, 10000 },
@@ -172,9 +212,10 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	DEV_ASSERT(vkCreateDescriptorPool(device.device, &descriptorPoolCreateInfo, nullptr, &descriptorPool) == VK_SUCCESS, "RenderManager", "Error creating the Descriptor Pool!");
 	DEV_LOG(TE_INFO, "RenderManager", "DescriptorPool created!");
+}
 
-		// TODO Descriptor layouts
-	/* texture */
+void RenderManager::CreateDescriptorLayouts()
+{
 	VkDescriptorSetLayoutBinding assimpTextureBind{};
 	assimpTextureBind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	assimpTextureBind.binding = 0;
@@ -221,8 +262,10 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	DEV_ASSERT(vkCreateDescriptorSetLayout(device.device, &skyBoxLayoutCreateInfo, nullptr, &skyBoxDescriptorSetLayout) == VK_SUCCESS, "RenderManager", "Error creating the descriptor set for the sky box!");
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Layout created!");
+}
 
-		// TODO Descriptor sets
+void RenderManager::CreateDescriptorSets()
+{
 	VkDescriptorSetAllocateInfo skyBoxAllocate = {};
 	skyBoxAllocate.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	skyBoxAllocate.descriptorPool = descriptorPool;
@@ -231,36 +274,45 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	DEV_ASSERT(vkAllocateDescriptorSets(device.device, &skyBoxAllocate, &skyBoxDescriptorSet) == VK_SUCCESS, "RenderManager", "Error allocating sky box description set!");
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set created!");
+}
 
-	// TODO RenderPass
+void RenderManager::CreateRenderPass()
+{
 	renderPass.Initialization(device.device, swapchain.image_format, depthFormat);
+}
 
-		// TODO Pipeline layout
+void RenderManager::CreatePipelineLayouts()
+{
 	// Skybox
-	
 	std::vector<VkDescriptorSetLayout> skyboxLayouts =
 	{
 		rdAssimpTextureDescriptorLayout,
 		rdSkyboxDescriptorLayout
 	};
 	skyboxLayout.Initialization(device.device, skyboxLayouts);
-	// TODO Pipeline
+}
+
+void RenderManager::CreatePipelines()
+{
 	// Skybox
 	std::string vertexShaderFileName = "Shaders/skybox.vert.spv";
 	std::string fragmentShaderFileName = "Shaders/skybox.frag.spv";
 	skyboxPipeline.Initialization(device.device, skyboxLayout.GetPipelineLayout(), renderPass.GetRenderPass(), vertexShaderFileName, fragmentShaderFileName);
-	
-	// Create Pipeline NOTE Maybe need multiple pipelines to avoid creating then in real time
-	// Create Framebuffer
+}
+
+void RenderManager::CreateFramebuffer()
+{
 	framebuffer.Initialization(device.device, renderPass.GetRenderPass(), depthImageView, swapchain);
+}
 
-	// Create semaphores to sync GPU and CPU (fences)
+void RenderManager::CreateFences()
+{
 	fences.Initialization(device.device);
+}
+
+void RenderManager::CreateSemaphores()
+{	
 	semaphores.Initialization(device.device);
-
-	// TODO Create matrix to apply translations and rotations
-
-
 }
 
 void RenderManager::Update()

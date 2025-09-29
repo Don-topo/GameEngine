@@ -26,6 +26,27 @@ public:
 	void Update();
 	void Cleanup();
 private:
+	void InitializeDevice();
+	void InitializeVMA();
+	void InitializeQueues();
+	void CreateSwapchain();
+	void CreateDepthBuffer();
+	void CreateCommandPools();
+	void CreateCommandBuffers();
+	void CreateVertexBuffers();
+	void CreateMatrixUBO();
+	void CreateSSBOs();
+	void CreateDescriptorPool();
+	void CreateDescriptorLayouts();
+	void CreateDescriptorSets();
+	void CreateRenderPass();
+	void CreatePipelineLayouts();
+	void CreatePipelines();
+	void CreateFramebuffer();
+	void CreateFences();
+	void CreateSemaphores();
+
+	SDL_Window* window;
 	vkb::Instance instance;
 	VkSurfaceKHR surface;
 	vkb::PhysicalDevice physicalDevice;

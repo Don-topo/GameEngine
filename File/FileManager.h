@@ -14,7 +14,7 @@ class FileManager
 {
 public:
 	static std::string LoadFile(std::string fileName);
-
+	
 private:
 
 };

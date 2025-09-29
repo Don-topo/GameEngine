@@ -9,12 +9,13 @@ class Camera
 {
 public:
 	std::string GetName() { return cameraName; }
-	void SetName(std::string newName) { cameraName = newName; };
+	void SetName(std::string newName) { cameraName = newName; }
 
 	void UpadeCamera();
 	void MoveCameraToPosition();
 
 	glm::vec3 GetWorldPosition() { return worldPosition; }
+	void SetWorldPosition(glm::vec3 newWorldPosition) { worldPosition = newWorldPosition; }
 
 private:
 	std::string cameraName;

@@ -132,6 +132,8 @@ file(GLOB SOURCES
     Main.cpp
     Engine/*.h
     Engine/*.cpp
+    AABB/*.h
+    AABB/*.cpp
     Logger/*.h
     Logger/*.cpp
     Timer/*.h

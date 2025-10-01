@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include "Engine/GameEngine.h"
 
 unsigned const width = 1280;

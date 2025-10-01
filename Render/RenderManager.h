@@ -17,7 +17,8 @@
 #include "Syncronization/SyncSemaphores.h"
 #include "RenderPass/RenderPass.h"
 #include "VertexBuffer/VertexBuffer.h"
-//#include "Texture/Texture.h"
+#include "../Animation/Models/Skybox/SkyboxModel.h"
+#include "Texture/Texture.h"
 
 class RenderManager
 {
@@ -77,4 +78,7 @@ private:
 	VkDescriptorSet skyBoxDescriptorSet;
 	VkDescriptorSetLayout rdAssimpTextureDescriptorLayout = VK_NULL_HANDLE;
 	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
+
+	SkyboxModel skyboxModel = {};
+	Texture skyboxTexture;
 };

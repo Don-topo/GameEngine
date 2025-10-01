@@ -67,18 +67,18 @@ FetchContent_GetProperties(SDL3)
 
 # STB
 FetchContent_Declare(
-    stbi
-    GIT_REPOSITORY https://github.com/nothings/stb
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
     GIT_TAG master
     GIT_SHALLOW TRUE
 )
 
-FetchContent_MakeAvailable(stbi)
-FetchContent_GetProperties(stbi)
-if(NOT stbi_POPULATED)
-    FetchContent_Populate(stbi)
-    add_subdirectory(${stbi_SOURCE_DIR} EXCLUDE_FROM_ALL)
-endif()
+FetchContent_MakeAvailable(stb)
+#FetchContent_GetProperties(stb)
+#if(NOT stb_POPULATED)
+#    FetchContent_Populate(stb)
+#    add_subdirectory(${stb_SOURCE_DIR} EXCLUDE_FROM_ALL)
+#endif()
 
 # YAML-CPP
 FetchContent_Declare(
@@ -189,6 +189,7 @@ file(GLOB SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${stb_SOURCE_DIR})
 
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/x64)

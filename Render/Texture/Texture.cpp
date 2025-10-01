@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, TextureData texData, std::string textureFilename,
+void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, std::string textureFilename,
 	bool generateMipmaps, bool flipImage)
 {
 	int texWidth;
@@ -50,10 +50,10 @@ void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDev
 
 	VkTextureStagingBuffer textureStagingBuffer = { stagingBuffer, stagingAllocator };
 
-	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, textureData, textureStagingBuffer, descriptorPool, descriptorSetLayout, texWidth, texHeight, generateMipmaps, mipmapLevels);
+	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, textureStagingBuffer, descriptorPool, descriptorSetLayout, texWidth, texHeight, generateMipmaps, mipmapLevels);
 }
 
-void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, TextureData textureData, aiTexel* texelData, std::string fileName, int width, int height, bool generateMipmaps, bool flipImage)
+void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, aiTexel* texelData, std::string fileName, int width, int height, bool generateMipmaps, bool flipImage)
 {
 	int texWidth;
 	int texHeight;
@@ -103,10 +103,10 @@ void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDev
 
 	VkTextureStagingBuffer stagingData = { stagingBuffer, stagingBufferAllocation };
 
-	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, textureData, stagingData, descriptorPool, descriptorSetLayout, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), generateMipmaps, static_cast<uint32_t>(mipmapLevels));
+	UploadTextureToGPU(allocator, device, physicalDevice, commandPool, queue, stagingData, descriptorPool, descriptorSetLayout, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), generateMipmaps, static_cast<uint32_t>(mipmapLevels));
 }
 
-void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, TextureData textureData, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage)
+void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage)
 {
 	int texWidth;
 	int texHeight;
@@ -147,10 +147,10 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 
 	VkTextureStagingBuffer stagingData = { stagingBuffer, stagingAllocation };
 
-	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, textureData, stagingData, descriptorPool, descriptorSetLayout, texWidth, texHeight);
+	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, stagingData, descriptorPool, descriptorSetLayout, texWidth, texHeight);
 }
 
-void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels)
+void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels)
 {
 	VkImageCreateInfo imageCreateInfo = {};
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -375,7 +375,7 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 	}
 }
 
-void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, TextureData textureData, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height)
+void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height)
 {
 	VkImageCreateInfo imageCreateInfo = {};
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -529,7 +529,7 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 	vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 }
 
-void Texture::Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device, TextureData textureData)
+void Texture::Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device)
 {
 	vkFreeDescriptorSets(device, descriptorPool, 1, &textureData.descriptorSet);
 	vkDestroySampler(device, textureData.sampler, nullptr);

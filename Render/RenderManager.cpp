@@ -26,6 +26,12 @@ void RenderManager::Initialization(SDL_Window* window)
 	// Create semaphores to sync GPU and CPU (fences)
 	CreateFences();
 	CreateSemaphores();
+
+	skyboxModel.Initialization();
+	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
+	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
+	const std::string skyboxTextureName = "";
+	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, skyBoxDescriptorSetLayout, skyboxTextureName, false);
 }
 
 void RenderManager::InitializeDevice()

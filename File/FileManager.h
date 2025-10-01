@@ -9,13 +9,22 @@
 #include <cstring> // strerror()
 #include <limits>
 #include <filesystem>
+#include <yaml-cpp/yaml.h>
 
 class FileManager
 {
 public:
 	static std::string LoadFile(std::string fileName);
-	
-private:
+	static void LoadYamlFile(std::string filename);
 
+	void CreateYamlFile();
+	void SaveYamlFile(std::string fileName);
+
+	bool HasKey(std::string key);
+	void GetValue(std::string key, std::string& value);
+private:
+	std::string yamlFileName;
+	YAML::Node yamlNode = {};
+	YAML::Emitter yamlEmitter = {};
 };
 

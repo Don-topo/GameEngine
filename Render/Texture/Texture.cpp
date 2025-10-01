@@ -36,11 +36,11 @@ void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDev
 	VmaAllocationCreateInfo vmaStagingAllocatorCreateInfo = {};
 	vmaStagingAllocatorCreateInfo.usage = VMA_MEMORY_USAGE_CPU_COPY;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &vmaStagingAllocatorCreateInfo, &stagingBuffer, &stagingAllocator, nullptr), "Texture", "Error allocating the texture buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &vmaStagingAllocatorCreateInfo, &stagingBuffer, &stagingAllocator, nullptr) == VK_SUCCESS, "Texture", "Error allocating the texture buffer!");
 
 	void* dataToUpload;
 
-	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocator, &dataToUpload), "Texture", "Error mapping the texture!");
+	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocator, &dataToUpload) == VK_SUCCESS, "Texture", "Error mapping the texture!");
 
 	std::memcpy(dataToUpload, data, textureSize);
 	vmaUnmapMemory(allocator, stagingAllocator);
@@ -90,10 +90,10 @@ void Texture::LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDev
 	VmaAllocationCreateInfo stagingAllocationCreateInfo = {};
 	stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &stagingAllocationCreateInfo, &stagingBuffer, &stagingBufferAllocation, nullptr), "Texture", "Error creating staging buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferCreateInfo, &stagingAllocationCreateInfo, &stagingBuffer, &stagingBufferAllocation, nullptr) == VK_SUCCESS, "Texture", "Error creating staging buffer!");
 
 	void* uploadData;
-	DEV_ASSERT(vmaMapMemory(allocator, stagingBufferAllocation, &uploadData), "Texture", "Error mapping the texture!");
+	DEV_ASSERT(vmaMapMemory(allocator, stagingBufferAllocation, &uploadData) == VK_SUCCESS, "Texture", "Error mapping the texture!");
 
 	std::memcpy(uploadData, data, imageSize);
 	vmaUnmapMemory(allocator, stagingBufferAllocation);
@@ -119,6 +119,7 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 	if (!textData)
 	{
 		stbi_image_free(textData);
+		DEV_ASSERT(false, "Texture", "Failed to load the texture!");
 		return;
 	}
 
@@ -135,10 +136,10 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 	VmaAllocationCreateInfo stagingAllocationCreateInfo = {};
 	stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocationCreateInfo, &stagingBuffer, &stagingAllocation, nullptr), "Texture", "Error creating the texture buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocationCreateInfo, &stagingBuffer, &stagingAllocation, nullptr) == VK_SUCCESS, "Texture", "Error creating the texture buffer!");
 
 	void* data;
-	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocation, &data), "Texture", "Error mapping the texture!");
+	DEV_ASSERT(vmaMapMemory(allocator, stagingAllocation, &data) == VK_SUCCESS, "Texture", "Error mapping the texture!");
 	std::memcpy(data, textData, deviceSize);
 	vmaUnmapMemory(allocator, stagingAllocation);
 	vmaFlushAllocation(allocator, stagingAllocation, 0, deviceSize);
@@ -147,7 +148,7 @@ void Texture::LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysica
 
 	VkTextureStagingBuffer stagingData = { stagingBuffer, stagingAllocation };
 
-	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, stagingData, descriptorPool, descriptorSetLayout, texWidth, texHeight);
+	UploadCubeTextureToGPU(allocator, device, physicalDevice, commandPool, graphicsQeueue, stagingData, descriptorPool, descriptorSetLayout, static_cast<uint32_t>(texWidth/4), static_cast<uint32_t>(texHeight / 3));
 }
 
 void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels)
@@ -170,7 +171,7 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 	VmaAllocationCreateInfo allocationCreateInfo = {};
 	allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-	DEV_ASSERT(vmaCreateImage(allocator, &imageCreateInfo, &allocationCreateInfo, &textureData.image, &textureData.imageAlloc, nullptr), "Texture", "Error creating texture image!");
+	DEV_ASSERT(vmaCreateImage(allocator, &imageCreateInfo, &allocationCreateInfo, &textureData.image, &textureData.imageAlloc, nullptr) == VK_SUCCESS, "Texture", "Error creating texture image!");
 
 	CommandBuffer uploadCommandBuffer;
 	uploadCommandBuffer.CreateSingleShotBuffer(device, commandPool);
@@ -319,7 +320,7 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 			textureImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 			textureImageViewCreateInfo.subresourceRange.layerCount = 1;
 
-			DEV_ASSERT(vkCreateImageView(device, &textureImageViewCreateInfo, nullptr, &textureData.imageView), "Texture", "Error creating the image view!");
+			DEV_ASSERT(vkCreateImageView(device, &textureImageViewCreateInfo, nullptr, &textureData.imageView) == VK_SUCCESS, "Texture", "Error creating the image view!");
 
 			VkPhysicalDeviceFeatures features = {};
 			vkGetPhysicalDeviceFeatures(physicalDevice, &features);
@@ -347,7 +348,7 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 			textureSamplerCreateInfo.anisotropyEnable = isAnisotropyAvailable;
 			textureSamplerCreateInfo.maxAnisotropy = maxAnisotropy;
 
-			DEV_ASSERT(vkCreateSampler(device, &textureSamplerCreateInfo, nullptr, &textureData.sampler), "Texture", "Error creating the texture sampler!");
+			DEV_ASSERT(vkCreateSampler(device, &textureSamplerCreateInfo, nullptr, &textureData.sampler) == VK_SUCCESS, "Texture", "Error creating the texture sampler!");
 
 			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
 			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -355,7 +356,7 @@ void Texture::UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhys
 			descriptorSetAllocateInfo.descriptorSetCount = 1;
 			descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
 
-			DEV_ASSERT(vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &textureData.descriptorSet), "Texture", "Error creating the texture descriptor set!");
+			DEV_ASSERT(vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &textureData.descriptorSet) == VK_SUCCESS, "Texture", "Error creating the texture descriptor set!");
 
 			VkDescriptorImageInfo descriptorImageInfo = {};
 			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -397,7 +398,7 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 	VmaAllocationCreateInfo allocationCreateInfo = {};
 	allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-	DEV_ASSERT(vmaCreateImage(allocator, &imageCreateInfo, &allocationCreateInfo, &textureData.image, &textureData.imageAlloc, nullptr), "Texture", "Error creating the image of the texture!");
+	DEV_ASSERT(vmaCreateImage(allocator, &imageCreateInfo, &allocationCreateInfo, &textureData.image, &textureData.imageAlloc, nullptr) == VK_SUCCESS, "Texture", "Error creating the image of the texture!");
 
 	int cubeFaceWidth = width;
 	int cubeFaceHeight = height;
@@ -413,7 +414,7 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 
 	std::vector<VkBufferImageCopy> bufferImageCopies;
 	uint32_t offset = 0;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 6; ++i)
 	{
 		VkBufferImageCopy bufferImageCopy = {};
 		bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -476,7 +477,7 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 	imageViewCreateInfo.subresourceRange.layerCount = 6;
 
-	DEV_ASSERT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &textureData.imageView), "Texture", "Error creating image view for cube texture!");
+	DEV_ASSERT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &textureData.imageView) == VK_SUCCESS, "Texture", "Error creating image view for cube texture!");
 
 	VkPhysicalDeviceFeatures features = {};
 	vkGetPhysicalDeviceFeatures(physicDevice, &features);
@@ -503,15 +504,15 @@ void Texture::UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, Vk
 	samplerCreateInfo.anisotropyEnable = isAnisotropySupported;
 	samplerCreateInfo.maxAnisotropy = maxAnisotropy;
 
-	DEV_ASSERT(vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureData.sampler), "Texture", "Error creating texture sampler!");
+	DEV_ASSERT(vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureData.sampler) == VK_SUCCESS, "Texture", "Error creating texture sampler!");
 
 	VkDescriptorSetAllocateInfo descriptorSetAllocatorInfo = {};
 	descriptorSetAllocatorInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	descriptorSetAllocatorInfo.descriptorPool = descriptorPool;
 	descriptorSetAllocatorInfo.descriptorSetCount = 1;
-	descriptorSetAllocatorInfo.pSetLayouts;
+	descriptorSetAllocatorInfo.pSetLayouts = &descriptorSetLayout;
 
-	DEV_ASSERT(vkAllocateDescriptorSets(device, &descriptorSetAllocatorInfo, &textureData.descriptorSet), "Texture", "Error allocating descriptor sets!");
+	DEV_ASSERT(vkAllocateDescriptorSets(device, &descriptorSetAllocatorInfo, &textureData.descriptorSet) == VK_SUCCESS, "Texture", "Error allocating descriptor sets!");
 
 	VkDescriptorImageInfo descriptorImageInfo = {};
 	descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

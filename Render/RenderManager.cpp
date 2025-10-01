@@ -30,7 +30,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyboxModel.Initialization();
 	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
-	const std::string skyboxTextureName = "";
+	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
 	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, skyBoxDescriptorSetLayout, skyboxTextureName, false);
 }
 

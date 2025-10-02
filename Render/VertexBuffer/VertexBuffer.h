@@ -38,7 +38,7 @@ public:
 	void UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, LineMesh vertexData);
 	void UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, SkyboxMesh vertexData);
 	void UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, std::vector<glm::vec3> vertexData);
-	VertexBufferData GetVertexBuffer() { return vertexBufferData; }
+	VertexBufferData& GetVertexBuffer() { return vertexBufferData; }
 	void Cleanup(VmaAllocator& allocator);
 
 private:

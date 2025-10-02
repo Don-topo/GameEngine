@@ -9,10 +9,10 @@ public:
 	void Initialization(VkDevice device);
 	void Cleanup(VkDevice device);
 
-	VkSemaphore GetGraphicsSemaphore() { return graphicsSemaphore; }
-	VkSemaphore GetComputeSemaphore() { return computeSemaphore; }
-	VkSemaphore GetPresentSemaphore() { return presentSemaphore; }
-	VkSemaphore GetRenderSemaphore() { return renderSemaphore; }
+	VkSemaphore& GetGraphicsSemaphore() { return graphicsSemaphore; }
+	VkSemaphore& GetComputeSemaphore() { return computeSemaphore; }
+	VkSemaphore& GetPresentSemaphore() { return presentSemaphore; }
+	VkSemaphore& GetRenderSemaphore() { return renderSemaphore; }
 
 private:
 	VkSemaphore graphicsSemaphore;

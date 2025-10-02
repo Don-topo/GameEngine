@@ -31,7 +31,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
 	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
-	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, skyBoxDescriptorSetLayout, skyboxTextureName, false);
+	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
 }
 
 void RenderManager::InitializeDevice()
@@ -392,14 +392,34 @@ void RenderManager::Update()
 	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 1, 1, &skyBoxDescriptorSet, 0, nullptr);
 
 	VkDeviceSize sizeOffset = 0;
-	//vkCmdBindVertexBuffers(commandBuffer.GetCommandBuffer(), 0, 1, &skyboxVertexBuffer.GetVertexBuffer().buffer, &sizeOffset);
-	//vkCmdDraw()
-	
+	vkCmdBindVertexBuffers(commandBuffer.GetCommandBuffer(), 0, 1, &skyboxVertexBuffer.GetVertexBuffer().buffer, &sizeOffset);
+	// TODO put the skytexture inside sphere model => Implement sphere + load
+	//vkCmdDraw(commandBuffer.GetCommandBuffer(), static_cast<uint32_t>(), 1, 0, 0);
+	vkCmdEndRenderPass(commandBuffer.GetCommandBuffer());
+
+	VkPresentInfoKHR presentInfoKHR = {};
+	presentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfoKHR.waitSemaphoreCount = 1;
+	presentInfoKHR.pWaitSemaphores = &semaphores.GetRenderSemaphore();
+	presentInfoKHR.swapchainCount = 1;
+	presentInfoKHR.pSwapchains = &swapchain.swapchain;
+	presentInfoKHR.pImageIndices = &currentIndexImage;
+
+	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfoKHR);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		// TODO changed size of the screen, resize swapchain
+	}
+	else
+	{
+		DEV_LOG(TE_ERROR, "RenderManager", "Error presenting the next image!");
+	}
 }
 
 void RenderManager::Cleanup()
 {	
 	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting the device to be idling!");
+
 	fences.Cleanup(device.device);
 	semaphores.Cleanup(device.device);
 	commandBuffer.Cleanup(device.device);	
@@ -410,6 +430,7 @@ void RenderManager::Cleanup()
 	skyboxPipeline.Cleanup(device.device);
 	skyboxLayout.Cleanup(device.device);
 	renderPass.Cleanup(device.device);
+	skyboxTexture.Cleanup(allocator, descriptorPool, device.device);
 	vkFreeDescriptorSets(device.device, descriptorPool, 1, &skyBoxDescriptorSet);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Sets destroyed!");
 

@@ -15,8 +15,8 @@ void RenderManager::Initialization(SDL_Window* window)
 	CreateCommandBuffers();
 	CreateVertexBuffers();
 	CreateDescriptorPool();
-	// Create createMatrixUBO
-	// Create createSSBOs
+	CreateMatrixUBO();
+	CreateSSBOs();
 	CreateDescriptorLayouts();
 	CreateDescriptorSets();
 	CreateRenderPass();
@@ -29,6 +29,7 @@ void RenderManager::Initialization(SDL_Window* window)
 
 	skyboxModel.Initialization();
 	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
+	sphereModel = SphereModel(1.f, 5, 8, glm::vec3(1.f, 1.f, 1.f));
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
 	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
 	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
@@ -197,6 +198,16 @@ void RenderManager::CreateVertexBuffers()
 	skyboxVertexBuffer.Initialization(allocator, 1024);
 }
 
+void RenderManager::CreateMatrixUBO()
+{
+	perspectiveViewMaxtrixUBO.Initialization(allocator);
+}
+
+void RenderManager::CreateSSBOs()
+{
+
+}
+
 void RenderManager::CreateDescriptorPool()
 {
 	std::vector<VkDescriptorPoolSize> poolSizes =
@@ -321,6 +332,19 @@ void RenderManager::CreateSemaphores()
 	semaphores.Initialization(device.device);
 }
 
+void RenderManager::RecreateSwapchain()
+{
+	//SDL_GetWindowSizeInPixels(window, window)
+	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting de cpu!");
+	framebuffer.Cleanup(device.device);
+	vkDestroyImageView(device.device, depthImageView, nullptr);
+	vmaDestroyImage(allocator, depthImage, depthImageAllocation);
+	swapchain.destroy_image_views(swapchainImageViews);
+	CreateSwapchain();
+	CreateDepthBuffer();
+	CreateFramebuffer();
+}
+
 void RenderManager::Update()
 {
 	// Wait for fences
@@ -394,8 +418,26 @@ void RenderManager::Update()
 	VkDeviceSize sizeOffset = 0;
 	vkCmdBindVertexBuffers(commandBuffer.GetCommandBuffer(), 0, 1, &skyboxVertexBuffer.GetVertexBuffer().buffer, &sizeOffset);
 	// TODO put the skytexture inside sphere model => Implement sphere + load
-	//vkCmdDraw(commandBuffer.GetCommandBuffer(), static_cast<uint32_t>(), 1, 0, 0);
+	vkCmdDraw(commandBuffer.GetCommandBuffer(), static_cast<uint32_t>(sphereModel.GetSphereVertexs().vertices.size()), 1, 0, 0);
 	vkCmdEndRenderPass(commandBuffer.GetCommandBuffer());
+
+	commandBuffer.End();
+
+	std::vector<VkSemaphore> waitSemaphores = { semaphores.GetPresentSemaphore() };
+	std::vector<VkSemaphore> signalSemaphores = { semaphores.GetRenderSemaphore(), semaphores.GetGraphicsSemaphore() };
+	std::vector<VkPipelineStageFlags> waitStageFlags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	std::vector<VkCommandBuffer> commandBuffers = { commandBuffer.GetCommandBuffer() };
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
+	submitInfo.pWaitSemaphores = waitSemaphores.data();
+	submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
+	submitInfo.pSignalSemaphores = signalSemaphores.data();
+	submitInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+	submitInfo.pCommandBuffers = commandBuffers.data();
+
+	DEV_ASSERT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error submiting the draw command buffer!");
+	
 
 	VkPresentInfoKHR presentInfoKHR = {};
 	presentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -405,7 +447,7 @@ void RenderManager::Update()
 	presentInfoKHR.pSwapchains = &swapchain.swapchain;
 	presentInfoKHR.pImageIndices = &currentIndexImage;
 
-	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfoKHR);
+	result = vkQueuePresentKHR(presentQueue, &presentInfoKHR);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
 		// TODO changed size of the screen, resize swapchain
@@ -433,7 +475,7 @@ void RenderManager::Cleanup()
 	skyboxTexture.Cleanup(allocator, descriptorPool, device.device);
 	vkFreeDescriptorSets(device.device, descriptorPool, 1, &skyBoxDescriptorSet);
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Sets destroyed!");
-
+	perspectiveViewMaxtrixUBO.Cleanup(allocator);
 	vkDestroyDescriptorSetLayout(device.device, skyBoxDescriptorSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(device.device, rdAssimpTextureDescriptorLayout, nullptr);
 	vkDestroyDescriptorSetLayout(device.device, rdSkyboxDescriptorLayout, nullptr);

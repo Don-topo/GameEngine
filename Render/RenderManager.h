@@ -16,8 +16,10 @@
 #include "Syncronization/SyncFences.h"
 #include "Syncronization/SyncSemaphores.h"
 #include "RenderPass/RenderPass.h"
+#include "UniformBuffer/UniformBuffer.h"
 #include "VertexBuffer/VertexBuffer.h"
 #include "../Animation/Models/Skybox/SkyboxModel.h"
+#include "../Animation/Models/Sphere/SphereModel.h"
 #include "Texture/Texture.h"
 
 class RenderManager
@@ -47,6 +49,8 @@ private:
 	void CreateFences();
 	void CreateSemaphores();
 
+	void RecreateSwapchain();
+
 	SDL_Window* window;
 	vkb::Instance instance;
 	VkSurfaceKHR surface;
@@ -66,6 +70,7 @@ private:
 	PipelineLayout skyboxLayout;
 	SkyboxPipeline skyboxPipeline;
 	SyncFences fences;
+	UniformBuffer perspectiveViewMaxtrixUBO;
 	SyncSemaphores semaphores;
 	RenderPass renderPass;
 	VkFormat depthFormat = VK_FORMAT_UNDEFINED;
@@ -80,5 +85,6 @@ private:
 	VkDescriptorSetLayout rdSkyboxDescriptorLayout = VK_NULL_HANDLE;
 
 	SkyboxModel skyboxModel = {};
+	SphereModel sphereModel = {};
 	Texture skyboxTexture;
 };

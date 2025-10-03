@@ -10,13 +10,13 @@ void UniformBuffer::Initialization(VmaAllocator allocator)
 	VmaAllocationCreateInfo vmaAllocationCreateInfo = {};
 	vmaAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	DEV_ASSERT(vmaCreateBuffer(allocator, &bufferCreateInfo, &vmaAllocationCreateInfo, &uniformBufferData.buffer, &uniformBufferData.bufferAlloc, nullptr), "UniformBuffer", "Error creating the Uniform Buffer!");
+	DEV_ASSERT(vmaCreateBuffer(allocator, &bufferCreateInfo, &vmaAllocationCreateInfo, &uniformBufferData.buffer, &uniformBufferData.bufferAlloc, nullptr) == VK_SUCCESS, "UniformBuffer", "Error creating the Uniform Buffer!");
 }
 
 void UniformBuffer::UploadData(VmaAllocator allocator, UploadMatrices matrices)
 {
 	void* data = nullptr;
-	DEV_ASSERT(vmaMapMemory(allocator, uniformBufferData.bufferAlloc, &data), "UniformBuffer", "Error mapping the Uniform Mapping!");
+	DEV_ASSERT(vmaMapMemory(allocator, uniformBufferData.bufferAlloc, &data) == VK_SUCCESS, "UniformBuffer", "Error mapping the Uniform Mapping!");
 	std::memcpy(data, &matrices, sizeof(UploadMatrices));
 	vmaUnmapMemory(allocator, uniformBufferData.bufferAlloc);
 	vmaFlushAllocation(allocator, uniformBufferData.bufferAlloc, 0, uniformBufferData.bufferSize);

@@ -7,9 +7,9 @@
 class PipelineLayout
 {
 public:
-	void Initialization(VkDevice device, std::vector<VkDescriptorSetLayout> descriptorLayouts, std::vector<VkPushConstantRange> pushConstants = {});
-	VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }
-	void Cleanup(VkDevice device);
+	void Initialization(VkDevice& device, std::vector<VkDescriptorSetLayout>& descriptorLayouts, std::vector<VkPushConstantRange> pushConstants = {});
+	VkPipelineLayout& GetPipelineLayout() { return pipelineLayout; }
+	void Cleanup(VkDevice& device);
 
 private:
 	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;

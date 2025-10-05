@@ -7,8 +7,8 @@
 class CommandPool
 {
 public:
-	void Initialization(vkb::Device device, vkb::QueueType queueType);
-	VkCommandPool GetCommandPool() { return commandPool; }
+	void Initialization(vkb::Device& device, vkb::QueueType queueType);
+	VkCommandPool& GetCommandPool() { return commandPool; }
 	void Cleanup(VkDevice& device);
 
 private:

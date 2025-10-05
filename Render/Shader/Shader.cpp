@@ -2,7 +2,7 @@
 
 #include "../../File/FileManager.h"
 
-void Shader::LoadShader(VkDevice device, std::string fileName)
+void Shader::LoadShader(VkDevice& device, std::string fileName)
 {
 	std::string shaderContent = FileManager::LoadFile("C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\" + fileName);
 
@@ -14,7 +14,7 @@ void Shader::LoadShader(VkDevice device, std::string fileName)
 	DEV_ASSERT(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule) == VK_SUCCESS, "Shader", "Error creating the shader module!");
 }
 
-void Shader::Cleanup(VkDevice device)
+void Shader::Cleanup(VkDevice& device)
 {
 	vkDestroyShaderModule(device, shaderModule, nullptr);
 	DEV_LOG(TE_INFO, "Shader", "Shader module cleaned!");

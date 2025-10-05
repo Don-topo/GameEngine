@@ -7,9 +7,9 @@
 class Swapchain
 {
 public:
-	void Initialization(vkb::Device device);
+	void Initialization(vkb::Device& device);
 	void ResizeSwapchain();
-	vkb::Swapchain GetSwapchain() { return swapchain; }
+	vkb::Swapchain& GetSwapchain() { return swapchain; }
 	void Cleanup();
 private:
 	vkb::Swapchain swapchain;

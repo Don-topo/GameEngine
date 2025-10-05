@@ -7,9 +7,9 @@
 class Shader
 {
 public:
-	void LoadShader(VkDevice device, std::string fileName);
-	VkShaderModule GetShader() { return shaderModule; }
-	void Cleanup(VkDevice device);
+	void LoadShader(VkDevice& device, std::string fileName);
+	VkShaderModule& GetShader() { return shaderModule; }
+	void Cleanup(VkDevice& device);
 
 private:
 	VkShaderModule shaderModule;

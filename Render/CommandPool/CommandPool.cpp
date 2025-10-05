@@ -1,6 +1,6 @@
 #include "CommandPool.h"
 
-void CommandPool::Initialization(vkb::Device device, vkb::QueueType queueType)
+void CommandPool::Initialization(vkb::Device& device, vkb::QueueType queueType)
 {
 	VkCommandPoolCreateInfo commandPoolCreateInfo {};
 	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;	

@@ -29,7 +29,8 @@ void GameEngine::Loop()
 			if (e.type == SDL_EVENT_QUIT) {
 				running = false;
 			}
-		}				
+		}
+		renderManager->Update();
 	}
 }
 

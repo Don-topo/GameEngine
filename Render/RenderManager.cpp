@@ -32,7 +32,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	sphereModel = SphereModel(1.f, 5, 8, glm::vec3(1.f, 1.f, 1.f));
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
 	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
-	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
+	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice.physical_device, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
 }
 
 void RenderManager::InitializeDevice()
@@ -363,11 +363,11 @@ void RenderManager::Update()
 	DEV_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "RenderManager", "Error obtaining the next swapchain image!");
 
 	// Reset fences before recording commands	
-	DEV_ASSERT(vkResetFences(device.device, 1, (VkFence*)fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
+	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
 
 	
 	// Render Graphics
-	DEV_ASSERT(vkResetFences(device.device, 1, (VkFence*)fences.GetRenderFence()), "RenderManager", "Error reseting the render fences!");
+	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error reseting the render fences!");
 	commandBuffer.Reset(0);
 	commandBuffer.BeginSingleShot();
 
@@ -412,7 +412,7 @@ void RenderManager::Update()
 	// Draw skybox
 	vkCmdBindPipeline(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline.GetSkyboxPipeline());
 	// TODO Load skybox texture on initialization
-	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 0, 1, nullptr, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 0, 1, &skyBoxDescriptorSet, 0, nullptr);
 	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 1, 1, &skyBoxDescriptorSet, 0, nullptr);
 
 	VkDeviceSize sizeOffset = 0;

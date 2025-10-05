@@ -1,6 +1,6 @@
 #include "SyncSemaphores.h"
 
-void SyncSemaphores::Initialization(VkDevice device)
+void SyncSemaphores::Initialization(VkDevice& device)
 {
 	VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -12,7 +12,7 @@ void SyncSemaphores::Initialization(VkDevice device)
 	DEV_LOG(TE_INFO, "SyncSemaphores", "Semaphores created!");
 }
 
-void SyncSemaphores::Cleanup(VkDevice device)
+void SyncSemaphores::Cleanup(VkDevice& device)
 {
 	vkDestroySemaphore(device, graphicsSemaphore, nullptr);
 	vkDestroySemaphore(device, computeSemaphore, nullptr);

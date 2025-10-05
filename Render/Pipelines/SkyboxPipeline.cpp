@@ -1,6 +1,6 @@
 #include "SkyboxPipeline.h"
 
-void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLayout, VkRenderPass renderpass, std::string vertexShaderFilename, std::string fragmentShaderFilename)
+void SkyboxPipeline::Initialization(VkDevice& device, VkPipelineLayout& pipelineLayout, VkRenderPass& renderpass, std::string vertexShaderFilename, std::string fragmentShaderFilename)
 {
 	// Load Shaders
 	std::unique_ptr<Shader> vertexShader = std::make_unique<Shader>();
@@ -139,7 +139,7 @@ void SkyboxPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLa
 	fragmentShader->Cleanup(device);
 }
 
-void SkyboxPipeline::Cleanup(VkDevice device)
+void SkyboxPipeline::Cleanup(VkDevice& device)
 {
 	vkDestroyPipeline(device, pipeline, nullptr);
 	DEV_LOG(TE_INFO, "SkyboxPipeline", "Skybox pipeline deleted!");

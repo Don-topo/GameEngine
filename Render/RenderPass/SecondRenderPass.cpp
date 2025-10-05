@@ -1,6 +1,6 @@
 #include "SecondRenderPass.h"
 
-void SecondRenderPass::Initialize(VkDevice device, VkFormat imageFormat, VkFormat depthFormat)
+void SecondRenderPass::Initialize(VkDevice& device, VkFormat& imageFormat, VkFormat& depthFormat)
 {
 	VkAttachmentDescription colorAttachmentDescription = {};
 	colorAttachmentDescription.format = imageFormat;
@@ -68,7 +68,7 @@ void SecondRenderPass::Initialize(VkDevice device, VkFormat imageFormat, VkForma
 	DEV_ASSERT(vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &renderPass), "SecondRenderPass", "Error creating RenderPass!");
 }
 
-void SecondRenderPass::Cleanup(VkDevice device)
+void SecondRenderPass::Cleanup(VkDevice& device)
 {
 	vkDestroyRenderPass(device, renderPass, nullptr);
 	DEV_LOG(TE_INFO, "SecondRenderPass", "RenderPass destroyed!");

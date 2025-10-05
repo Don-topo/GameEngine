@@ -6,11 +6,11 @@
 class SyncFences
 {
 public:
-	void Initialization(VkDevice device);
-	void Cleanup(VkDevice device);
+	void Initialization(VkDevice& device);
+	void Cleanup(VkDevice& device);
 
-	VkFence GetRenderFence() { return renderFence; }
-	VkFence GetComputeFence() { return computeFence; }
+	VkFence& GetRenderFence() { return renderFence; }
+	VkFence& GetComputeFence() { return computeFence; }
 
 private:
 	VkFence renderFence;

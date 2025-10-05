@@ -16,7 +16,7 @@ class SkyboxModel
 {
 public:
 	void Initialization();
-	SkyboxMesh GetSkyboxVertex() { return skyboxVertex; }
+	SkyboxMesh& GetSkyboxVertex() { return skyboxVertex; }
 private:
 	SkyboxMesh skyboxVertex = {};
 };

@@ -27,14 +27,14 @@ struct VkTextureStagingBuffer {
 class Texture
 {
 public:
-	void LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, std::string textureFilename,
+	void LoadTexture(VmaAllocator& allocator, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkDescriptorPool& descriptorPool, VkDescriptorSetLayout& descriptorSetLayout, VkQueue& queue, std::string textureFilename,
 		bool generateMipmaps, bool flipImage);
-	void LoadTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, VkQueue queue, aiTexel* texelData, std::string fileName, int width, int height, bool generateMipmaps = true, bool flipImage = false);
-	void LoadCubeTexture(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue graphicsQeueue, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, std::string textureFilename, bool flipImage);
-	void Cleanup(VmaAllocator allocator, VkDescriptorPool descriptorPool, VkDevice device);
-	TextureData GetTextureData() { return textureData; }
+	void LoadTexture(VmaAllocator& allocator, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkDescriptorPool& descriptorPool, VkDescriptorSetLayout& descriptorSetLayout, VkQueue& queue, aiTexel* texelData, std::string fileName, int width, int height, bool generateMipmaps = true, bool flipImage = false);
+	void LoadCubeTexture(VmaAllocator& allocator, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQeueue, VkDescriptorPool& descriptorPool, VkDescriptorSetLayout& descriptorSetLayout, std::string textureFilename, bool flipImage);
+	void Cleanup(VmaAllocator& allocator, VkDescriptorPool& descriptorPool, VkDevice& device);
+	TextureData& GetTextureData() { return textureData; }
 private:
-	void UploadTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue, VkTextureStagingBuffer textureStagingBuffer, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels);
-	void UploadCubeTextureToGPU(VmaAllocator allocator, VkDevice device, VkPhysicalDevice physicDevice, VkCommandPool commandPool, VkQueue queue, VkTextureStagingBuffer staging, VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout, uint32_t width, uint32_t height);
+	void UploadTextureToGPU(VmaAllocator& allocator, VkDevice& device, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& queue, VkTextureStagingBuffer& textureStagingBuffer, VkDescriptorPool& descriptorPool, VkDescriptorSetLayout& descriptorSetLayout, uint32_t width, uint32_t height, bool generateMipmaps, uint32_t mipmapLevels);
+	void UploadCubeTextureToGPU(VmaAllocator& allocator, VkDevice& device, VkPhysicalDevice& physicDevice, VkCommandPool& commandPool, VkQueue& queue, VkTextureStagingBuffer& staging, VkDescriptorPool& descriptorPool, VkDescriptorSetLayout& descriptorSetLayout, uint32_t width, uint32_t height);
 	TextureData textureData;
 };

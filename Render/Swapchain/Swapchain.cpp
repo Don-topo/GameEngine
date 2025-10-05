@@ -1,6 +1,6 @@
 #include "Swapchain.h"
 
-void Swapchain::Initialization(vkb::Device device)
+void Swapchain::Initialization(vkb::Device& device)
 {
 	vkb::SwapchainBuilder swapchainBuilder{ device };
 	VkSurfaceFormatKHR surfaceFormatKHR;

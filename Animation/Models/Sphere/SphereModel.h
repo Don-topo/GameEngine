@@ -11,7 +11,7 @@ public:
 		sphereRadius(radius), vertDiv(verticalDiv), hortDiv(horizontalDiv), color(color) {
 		Initialization();
 	};
-	LineMesh GetSphereVertexs() { return sphereMesh; }
+	LineMesh& GetSphereVertexs() { return sphereMesh; }
 
 private:
 	void Initialization();

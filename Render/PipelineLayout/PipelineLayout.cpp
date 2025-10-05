@@ -1,6 +1,6 @@
 #include "PipelineLayout.h"
 
-void PipelineLayout::Initialization(VkDevice device, std::vector<VkDescriptorSetLayout> descriptorLayouts, std::vector<VkPushConstantRange> pushConstants)
+void PipelineLayout::Initialization(VkDevice& device, std::vector<VkDescriptorSetLayout>& descriptorLayouts, std::vector<VkPushConstantRange> pushConstants)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -16,7 +16,7 @@ void PipelineLayout::Initialization(VkDevice device, std::vector<VkDescriptorSet
 	DEV_LOG(TE_INFO, "PipelineLayout", "PipelineLayout created!");
 }
 
-void PipelineLayout::Cleanup(VkDevice device)
+void PipelineLayout::Cleanup(VkDevice& device)
 {
 	if (pipelineLayout != nullptr)
 	{

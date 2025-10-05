@@ -1,6 +1,6 @@
 #include "Framebuffer.h"
 
-void Framebuffer::Initialization(VkDevice device, VkRenderPass renderPass, VkImageView imageView, vkb::Swapchain swapchain)
+void Framebuffer::Initialization(VkDevice& device, VkRenderPass& renderPass, VkImageView& imageView, vkb::Swapchain& swapchain)
 {
 	unsigned int swapchainImageViewSize = swapchain.get_image_views().value().size();
 
@@ -26,7 +26,7 @@ void Framebuffer::Initialization(VkDevice device, VkRenderPass renderPass, VkIma
 	DEV_LOG(TE_INFO, "Framebuffer", "Framebuffers created!");
 }
 
-void Framebuffer::Cleanup(VkDevice device) {
+void Framebuffer::Cleanup(VkDevice& device) {
 	for each(VkFramebuffer framebuffer in framebuffers)
 	{
 		vkDestroyFramebuffer(device, framebuffer, nullptr);

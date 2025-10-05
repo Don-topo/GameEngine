@@ -22,9 +22,9 @@ struct UploadMatrices {
 class UniformBuffer
 {
 public:
-	void Initialization(VmaAllocator allocator);
-	void UploadData(VmaAllocator allocator, UploadMatrices matrices);
-	void Cleanup(VmaAllocator allocator);
+	void Initialization(VmaAllocator& allocator);
+	void UploadData(VmaAllocator& allocator, UploadMatrices& matrices);
+	void Cleanup(VmaAllocator& allocator);
 
 private:
 	UniformBufferData uniformBufferData;

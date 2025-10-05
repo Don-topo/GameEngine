@@ -7,9 +7,9 @@
 class SecondRenderPass
 {
 public:
-	void Initialize(VkDevice device, VkFormat imageFormat, VkFormat depthFormat);
-	VkRenderPass GetRenderPass() { return renderPass; }
-	void Cleanup(VkDevice device);
+	void Initialize(VkDevice& device, VkFormat& imageFormat, VkFormat& depthFormat);
+	VkRenderPass& GetRenderPass() { return renderPass; }
+	void Cleanup(VkDevice& device);
 private:
 	VkRenderPass renderPass;
 };

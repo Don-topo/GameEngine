@@ -1,6 +1,6 @@
 #include "VertexBuffer.h"
 
-void VertexBuffer::Initialization(VmaAllocator allocator, unsigned int bufferSize)
+void VertexBuffer::Initialization(VmaAllocator& allocator, unsigned int bufferSize)
 {
 	if (bufferSize == 0) bufferSize = 1024;
 
@@ -30,7 +30,7 @@ void VertexBuffer::Initialization(VmaAllocator allocator, unsigned int bufferSiz
 
 }
 
-void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, VkMesh vertexData)
+void VertexBuffer::UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkMesh& vertexData)
 {
 	unsigned int dataSize = vertexData.vertices.size() * sizeof(VkVertex);
 
@@ -50,7 +50,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	UploadToGPU(device, commandPool, graphicsQueue);
 }
 
-void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, LineMesh vertexData)
+void VertexBuffer::UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& graphicsQueue, LineMesh& vertexData)
 {
 	unsigned int vertexDataSize = vertexData.vertices.size() * sizeof(LineMesh);
 
@@ -70,7 +70,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	UploadToGPU(device, commandPool, graphicsQueue);
 }
 
-void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, SkyboxMesh vertexData)
+void VertexBuffer::UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& graphicsQueue, SkyboxMesh& vertexData)
 {
 	unsigned int vertexDataSize = vertexData.vertices.size() * sizeof(SkyboxMesh);
 
@@ -90,7 +90,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	UploadToGPU(device, commandPool, graphicsQueue);
 }
 
-void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue, std::vector<glm::vec3> vertexData)
+void VertexBuffer::UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::vector<glm::vec3>& vertexData)
 {
 	unsigned int vertexDataSize = vertexData.size() * sizeof(glm::vec3);
 
@@ -110,7 +110,7 @@ void VertexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommand
 	UploadToGPU(device, commandPool, graphicsQueue);
 }
 
-void VertexBuffer::UploadToGPU(VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue)
+void VertexBuffer::UploadToGPU(VkDevice& device, VkCommandPool& commandPool, VkQueue& graphicsQueue)
 {
 	VkBufferMemoryBarrier bufferMemoryBarrier = {};
 	bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -134,6 +134,7 @@ void VertexBuffer::UploadToGPU(VkDevice device, VkCommandPool commandPool, VkQue
 	vkCmdPipelineBarrier(commandBuffer.GetCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr);
 	commandBuffer.submitSingleShotBuffer(device, commandPool, graphicsQueue);
 	// TODO After this I need to delete this commandBuffer to avoid a memory leak?
+	DEV_LOG(TE_INFO, "VertexBuffer", "Texture loaded to GPU!");
 }
 
 void VertexBuffer::Cleanup(VmaAllocator& allocator)

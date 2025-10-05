@@ -48,9 +48,9 @@ struct VkMesh {
 class IndexBuffer
 {
 public:
-	void Initialization(VmaAllocator allocator, size_t sizeToAllocate);
-	void UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, VkMesh vertexData);
-	void Cleanup(VmaAllocator allocator, VkDevice device);
+	void Initialization(VmaAllocator& allocator, size_t sizeToAllocate);
+	void UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& queue, VkMesh& vertexData);
+	void Cleanup(VmaAllocator& allocator, VkDevice& device);
 
 private:
 	IndexBufferData indexBufferData = {};

@@ -1,6 +1,6 @@
 #include "SyncFences.h"
 
-void SyncFences::Initialization(VkDevice device)
+void SyncFences::Initialization(VkDevice& device)
 {
 	VkFenceCreateInfo fenceCreateInfo = {};
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -10,7 +10,7 @@ void SyncFences::Initialization(VkDevice device)
 	DEV_LOG(TE_INFO, "SyncFences", "Fences Created!");
 }
 
-void SyncFences::Cleanup(VkDevice device)
+void SyncFences::Cleanup(VkDevice& device)
 {
 	vkDestroyFence(device, renderFence, nullptr);
 	vkDestroyFence(device, computeFence, nullptr);

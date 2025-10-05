@@ -1,6 +1,6 @@
 #include "CommandBuffer.h"
 
-void CommandBuffer::Initialization(VkDevice device, VkCommandPool commandPool)
+void CommandBuffer::Initialization(VkDevice& device, VkCommandPool& commandPool)
 {
 	this->commandPool = commandPool;
 
@@ -37,7 +37,7 @@ void CommandBuffer::BeginSingleShot()
 	DEV_ASSERT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo) == VK_SUCCESS, "CommandBuffer", "Error creating the one shot CommandBuffer!");
 }
 
-void CommandBuffer::CreateSingleShotBuffer(VkDevice device, VkCommandPool commandPool)
+void CommandBuffer::CreateSingleShotBuffer(VkDevice& device, VkCommandPool& commandPool)
 {
 	Initialization(device, commandPool);
 
@@ -46,7 +46,7 @@ void CommandBuffer::CreateSingleShotBuffer(VkDevice device, VkCommandPool comman
 	BeginSingleShot();
 }
 
-void CommandBuffer::submitSingleShotBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue)
+void CommandBuffer::submitSingleShotBuffer(VkDevice& device, VkCommandPool& commandPool, VkQueue& queue)
 {
 	End();
 
@@ -74,7 +74,7 @@ void CommandBuffer::submitSingleShotBuffer(VkDevice device, VkCommandPool comman
 	Cleanup(device);
 }
 
-void CommandBuffer::Cleanup(VkDevice device)
+void CommandBuffer::Cleanup(VkDevice& device)
 {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	DEV_LOG(TE_INFO, "CommandBuffer", "CommandBuffer destroyed!");

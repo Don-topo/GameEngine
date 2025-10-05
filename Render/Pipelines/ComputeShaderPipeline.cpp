@@ -1,6 +1,6 @@
 #include "ComputeShaderPipeline.h"
 
-void ComputeShaderPipeline::Initialization(VkDevice device, VkPipelineLayout pipelineLayout, std::string shaderFileName)
+void ComputeShaderPipeline::Initialization(VkDevice& device, VkPipelineLayout& pipelineLayout, std::string shaderFileName)
 {
 	Shader shader;
 	shader.LoadShader(device, shaderFileName);
@@ -21,7 +21,7 @@ void ComputeShaderPipeline::Initialization(VkDevice device, VkPipelineLayout pip
 	shader.Cleanup(device);
 }
 
-void ComputeShaderPipeline::Cleanup(VkDevice device)
+void ComputeShaderPipeline::Cleanup(VkDevice& device)
 {
 	vkDestroyPipeline(device, pipeline, nullptr);
 	DEV_LOG(TE_INFO, "ComputeShaderPipeline", "Pipeline destroyed!");

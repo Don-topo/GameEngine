@@ -6,8 +6,8 @@
 class SyncSemaphores
 {
 public:
-	void Initialization(VkDevice device);
-	void Cleanup(VkDevice device);
+	void Initialization(VkDevice& device);
+	void Cleanup(VkDevice& device);
 
 	VkSemaphore& GetGraphicsSemaphore() { return graphicsSemaphore; }
 	VkSemaphore& GetComputeSemaphore() { return computeSemaphore; }

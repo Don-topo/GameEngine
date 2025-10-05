@@ -1,6 +1,6 @@
 #include "IndexBuffer.h"
 
-void IndexBuffer::Initialization(VmaAllocator allocator, size_t sizeToAllocate)
+void IndexBuffer::Initialization(VmaAllocator& allocator, size_t sizeToAllocate)
 {
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -26,7 +26,7 @@ void IndexBuffer::Initialization(VmaAllocator allocator, size_t sizeToAllocate)
 	indexBufferData.bufferSize = sizeToAllocate;
 }
 
-void IndexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandPool commandPool, VkQueue queue, VkMesh vertexData)
+void IndexBuffer::UploadData(VmaAllocator& allocator, VkDevice& device, VkCommandPool& commandPool, VkQueue& queue, VkMesh& vertexData)
 {
 	unsigned int vertexIndicesSize = vertexData.indices.size() * sizeof(uint32_t);
 	if (indexBufferData.bufferSize < vertexIndicesSize)
@@ -64,7 +64,7 @@ void IndexBuffer::UploadData(VmaAllocator allocator, VkDevice device, VkCommandP
 	commandBuffer.submitSingleShotBuffer(device, commandPool, queue);
 }
 
-void IndexBuffer::Cleanup(VmaAllocator allocator, VkDevice device)
+void IndexBuffer::Cleanup(VmaAllocator& allocator, VkDevice& device)
 {	
 	vmaDestroyBuffer(allocator, indexBufferData.stagingBuffer, indexBufferData.stagingBufferAlloc);
 	vmaDestroyBuffer(allocator, indexBufferData.buffer, indexBufferData.bufferAlloc);

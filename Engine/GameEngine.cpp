@@ -25,12 +25,12 @@ void GameEngine::Loop()
 	{
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
+			renderManager->Update();
 			audioManager->Update();
 			if (e.type == SDL_EVENT_QUIT) {
 				running = false;
 			}
-		}
-		renderManager->Update();
+		}		
 	}
 }
 

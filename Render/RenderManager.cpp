@@ -348,8 +348,9 @@ void RenderManager::RecreateSwapchain()
 void RenderManager::Update()
 {
 	// Wait for fences
+	// NOTE the next call blocks the execution fix this
 	std::vector<VkFence> fenc = { fences.GetRenderFence(), fences.GetComputeFence() };
-	DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT32_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
+	//DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
 
 	// Get the next Image
 	uint32_t currentIndexImage = 0;
@@ -365,7 +366,6 @@ void RenderManager::Update()
 	// Reset fences before recording commands	
 	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
 
-	
 	// Render Graphics
 	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error reseting the render fences!");
 	commandBuffer.Reset(0);
@@ -452,7 +452,7 @@ void RenderManager::Update()
 	{
 		// TODO changed size of the screen, resize swapchain
 	}
-	else
+	else if (result != VK_SUCCESS)
 	{
 		DEV_LOG(TE_ERROR, "RenderManager", "Error presenting the next image!");
 	}

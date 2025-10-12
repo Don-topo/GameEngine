@@ -50,8 +50,10 @@ private:
 	void CreateSemaphores();
 
 	void RecreateSwapchain();
+	void UpdateDescriptorSets();
 
 	SDL_Window* window;
+	int width, height;
 	vkb::Instance instance;
 	VkSurfaceKHR surface;
 	vkb::PhysicalDevice physicalDevice;

@@ -4,6 +4,8 @@ void SyncFences::Initialization(VkDevice& device)
 {
 	VkFenceCreateInfo fenceCreateInfo = {};
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	// Signal bit to avoid blocking the first waitFences
+	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 	DEV_ASSERT(vkCreateFence(device, &fenceCreateInfo, nullptr, &renderFence) == VK_SUCCESS, "SyncFences", "Failed to create Render Fence!");
 	DEV_ASSERT(vkCreateFence(device, &fenceCreateInfo, nullptr, &computeFence) == VK_SUCCESS, "SyncFences", "Failed to create Compute Fence!");

@@ -291,6 +291,8 @@ void RenderManager::CreateDescriptorSets()
 
 	DEV_ASSERT(vkAllocateDescriptorSets(device.device, &skyBoxAllocate, &skyBoxDescriptorSet) == VK_SUCCESS, "RenderManager", "Error allocating sky box description set!");
 	DEV_LOG(TE_INFO, "RenderManager", "Descriptor Set created!");
+
+	UpdateDescriptorSets();
 }
 
 void RenderManager::CreateRenderPass()
@@ -334,7 +336,13 @@ void RenderManager::CreateSemaphores()
 
 void RenderManager::RecreateSwapchain()
 {
-	//SDL_GetWindowSizeInPixels(window, window)
+	
+	SDL_GetWindowSizeInPixels(window, &width, &height);
+	if (width == 0 || height == 0)
+	{
+		SDL_GetWindowSizeInPixels(window, &width, &height);
+		SDL_WaitEvent(NULL);
+	}
 	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting de cpu!");
 	framebuffer.Cleanup(device.device);
 	vkDestroyImageView(device.device, depthImageView, nullptr);
@@ -345,23 +353,59 @@ void RenderManager::RecreateSwapchain()
 	CreateFramebuffer();
 }
 
+void RenderManager::UpdateDescriptorSets()
+{
+	// Skybox shader
+	VkDescriptorBufferInfo skyboxMatrixInfo = {};
+	skyboxMatrixInfo.buffer = perspectiveViewMaxtrixUBO.GetUniformBufferData().buffer;
+	skyboxMatrixInfo.offset = 0;
+	skyboxMatrixInfo.range = VK_WHOLE_SIZE;
+
+	VkWriteDescriptorSet skyboxMatrixWriteDescriptorSet = {};
+	skyboxMatrixWriteDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	skyboxMatrixWriteDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	skyboxMatrixWriteDescriptorSet.dstSet = skyBoxDescriptorSet;
+	skyboxMatrixWriteDescriptorSet.dstBinding = 0;
+	skyboxMatrixWriteDescriptorSet.descriptorCount = 1;
+	skyboxMatrixWriteDescriptorSet.pBufferInfo = &skyboxMatrixInfo;
+
+	std::vector<VkWriteDescriptorSet> writeDescriptorSets = { skyboxMatrixWriteDescriptorSet };
+
+	vkUpdateDescriptorSets(device.device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+}
+
 void RenderManager::Update()
 {
 	// Wait for fences
-	// NOTE the next call blocks the execution fix this
 	std::vector<VkFence> fenc = { fences.GetRenderFence(), fences.GetComputeFence() };
-	//DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
+	DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
 
 	// Get the next Image
 	uint32_t currentIndexImage = 0;
-	VkResult result = vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT32_MAX, semaphores.GetPresentSemaphore(), VK_NULL_HANDLE, &currentIndexImage);
+	VkResult result = vkAcquireNextImageKHR(device.device, swapchain.swapchain, UINT64_MAX, semaphores.GetPresentSemaphore(), VK_NULL_HANDLE, &currentIndexImage);
 
 	// Check if we need to recreate the swapchain
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		// TODO RecreateSwapchain
+		// RecreateSwapchain
+		RecreateSwapchain();
 	}
+	// The only valid results are succes and suboptimal khr
 	DEV_ASSERT(result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR, "RenderManager", "Error obtaining the next swapchain image!");
+
+	// do an empty submit if we don't have animated models to satisfy fence and semaphore  (to avoid blockings)
+	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+	VkSubmitInfo computeSubmitInfo{};
+	computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	computeSubmitInfo.waitSemaphoreCount = 1;
+	computeSubmitInfo.pWaitSemaphores = &semaphores.GetGraphicsSemaphore();
+	computeSubmitInfo.pWaitDstStageMask = &waitStage;
+
+	DEV_ASSERT(vkQueueSubmit(computeQueue, 1, &computeSubmitInfo, fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error submiting compute buffer");
+
+	/* we must wait for the compute shaders to finish before we can read the bone data */
+	DEV_ASSERT(vkWaitForFences(device.device, 1, &fences.GetComputeFence(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Error waiting the compute fence!");
 
 	// Reset fences before recording commands	
 	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
@@ -411,13 +455,13 @@ void RenderManager::Update()
 
 	// Draw skybox
 	vkCmdBindPipeline(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline.GetSkyboxPipeline());
-	// TODO Load skybox texture on initialization
-	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 0, 1, &skyBoxDescriptorSet, 0, nullptr);
+	// Load skybox texture on initialization
+	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 0, 1, &skyboxTexture.GetTextureData().descriptorSet, 0, nullptr);
 	vkCmdBindDescriptorSets(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxLayout.GetPipelineLayout(), 1, 1, &skyBoxDescriptorSet, 0, nullptr);
 
 	VkDeviceSize sizeOffset = 0;
 	vkCmdBindVertexBuffers(commandBuffer.GetCommandBuffer(), 0, 1, &skyboxVertexBuffer.GetVertexBuffer().buffer, &sizeOffset);
-	// TODO put the skytexture inside sphere model => Implement sphere + load
+	// Put the skytexture inside sphere model => Implement sphere + load
 	vkCmdDraw(commandBuffer.GetCommandBuffer(), static_cast<uint32_t>(sphereModel.GetSphereVertexs().vertices.size()), 1, 0, 0);
 	vkCmdEndRenderPass(commandBuffer.GetCommandBuffer());
 
@@ -435,6 +479,7 @@ void RenderManager::Update()
 	submitInfo.pSignalSemaphores = signalSemaphores.data();
 	submitInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 	submitInfo.pCommandBuffers = commandBuffers.data();
+	submitInfo.pWaitDstStageMask = waitStageFlags.data();
 
 	DEV_ASSERT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error submiting the draw command buffer!");
 	
@@ -450,7 +495,7 @@ void RenderManager::Update()
 	result = vkQueuePresentKHR(presentQueue, &presentInfoKHR);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
-		// TODO changed size of the screen, resize swapchain
+		RecreateSwapchain();
 	}
 	else if (result != VK_SUCCESS)
 	{

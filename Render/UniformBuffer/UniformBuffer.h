@@ -24,6 +24,7 @@ class UniformBuffer
 public:
 	void Initialization(VmaAllocator& allocator);
 	void UploadData(VmaAllocator& allocator, UploadMatrices& matrices);
+	UniformBufferData GetUniformBufferData() { return uniformBufferData; }
 	void Cleanup(VmaAllocator& allocator);
 
 private:

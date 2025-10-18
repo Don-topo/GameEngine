@@ -402,6 +402,7 @@ void RenderManager::Update()
 	computeSubmitInfo.pWaitSemaphores = &semaphores.GetGraphicsSemaphore();
 	computeSubmitInfo.pWaitDstStageMask = &waitStage;
 
+	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
 	DEV_ASSERT(vkQueueSubmit(computeQueue, 1, &computeSubmitInfo, fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error submiting compute buffer");
 
 	/* we must wait for the compute shaders to finish before we can read the bone data */
@@ -483,6 +484,7 @@ void RenderManager::Update()
 
 	DEV_ASSERT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error submiting the draw command buffer!");
 	
+	vkQueueWaitIdle(graphicsQueue);
 
 	VkPresentInfoKHR presentInfoKHR = {};
 	presentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

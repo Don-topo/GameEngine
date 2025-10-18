@@ -146,6 +146,8 @@ file(GLOB SOURCES
     Audio/*.cpp
     Camera/*.h
     Camera/*.cpp
+    Animation/Models/Assimp/*.h
+    Animation/Models/Assimp/*.cpp
     Animation/Models/Skybox/*.h
     Animation/Models/Skybox/*.cpp
     Animation/Models/Sphere/*.h

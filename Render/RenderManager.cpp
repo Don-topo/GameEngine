@@ -30,6 +30,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyboxModel.Initialization();
 	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
 	sphereModel = SphereModel(1.f, 5, 8, glm::vec3(1.f, 1.f, 1.f));
+	line = std::make_shared<LineMesh>();
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
 	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
 	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice.physical_device, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
@@ -191,6 +192,7 @@ void RenderManager::CreateCommandPools()
 void RenderManager::CreateCommandBuffers()
 {
 	commandBuffer.Initialization(device.device, graphicsCommandPool.GetCommandPool());
+	lineCommandBuffer.Initialization(device.device, graphicsCommandPool.GetCommandPool());
 }
 
 void RenderManager::CreateVertexBuffers()
@@ -512,6 +514,7 @@ void RenderManager::Cleanup()
 	fences.Cleanup(device.device);
 	semaphores.Cleanup(device.device);
 	commandBuffer.Cleanup(device.device);	
+	lineCommandBuffer.Cleanup(device.device);
 	graphicsCommandPool.Cleanup(device.device);
 	computeCommandPool.Cleanup(device.device);
 	skyboxVertexBuffer.Cleanup(allocator);	

@@ -69,6 +69,7 @@ private:
 	CommandPool graphicsCommandPool;
 	CommandPool computeCommandPool;
 	CommandBuffer commandBuffer;
+	CommandBuffer lineCommandBuffer;
 	PipelineLayout skyboxLayout;
 	SkyboxPipeline skyboxPipeline;
 	SyncFences fences;
@@ -89,4 +90,5 @@ private:
 	SkyboxModel skyboxModel = {};
 	SphereModel sphereModel = {};
 	Texture skyboxTexture;
+	std::shared_ptr<LineMesh> line;
 };

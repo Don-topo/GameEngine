@@ -65,6 +65,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(SDL3)
 FetchContent_GetProperties(SDL3)
 
+# --- Descargar Dear ImGui automáticamente ---
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG v1.91.0  # Puedes usar la versión más reciente disponible
+)
+FetchContent_MakeAvailable(imgui)
+
 # STB
 FetchContent_Declare(
     stb
@@ -146,8 +154,16 @@ file(GLOB SOURCES
     Audio/*.cpp
     Camera/*.h
     Camera/*.cpp
-    Animation/Models/Assimp/*.h
-    Animation/Models/Assimp/*.cpp
+    #Animation/Models/Assimp/*.h
+    #Animation/Models/Assimp/*.cpp
+    Animation/Models/Box/*.h
+    Animation/Models/Box/*.cpp
+    Animation/Models/Capsule/*.h
+    Animation/Models/Capsule/*.cpp
+    Animation/Models/Cylinder/*.h
+    Animation/Models/Cylinder/*.cpp
+    Animation/Models/Plane/*.h
+    Animation/Models/Plane/*.cpp
     Animation/Models/Skybox/*.h
     Animation/Models/Skybox/*.cpp
     Animation/Models/Sphere/*.h
@@ -184,8 +200,8 @@ file(GLOB SOURCES
     Render/UniformBuffer/*.cpp
     Render/VertexBuffer/*.h
     Render/VertexBuffer/*.cpp
-    Render/Model/*.h
-    Render/Model/*.cpp
+    #Render/Model/*.h
+    #Render/Model/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )
@@ -194,6 +210,23 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${stb_SOURCE_DIR})
+
+# --- Archivos fuente de ImGui ---
+target_sources(${PROJECT_NAME} PRIVATE
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
+
+# --- Directorios de cabeceras ---
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
 
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/x64)

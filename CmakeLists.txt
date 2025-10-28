@@ -200,6 +200,8 @@ file(GLOB SOURCES
     Render/UniformBuffer/*.cpp
     Render/VertexBuffer/*.h
     Render/VertexBuffer/*.cpp
+    Render/UI/*.h
+    Render/UI/*.cpp
     #Render/Model/*.h
     #Render/Model/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp

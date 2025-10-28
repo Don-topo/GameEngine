@@ -21,6 +21,7 @@
 #include "../Animation/Models/Skybox/SkyboxModel.h"
 #include "../Animation/Models/Sphere/SphereModel.h"
 #include "Texture/Texture.h"
+#include "UI/UI.h"
 
 class RenderManager
 {
@@ -48,6 +49,7 @@ private:
 	void CreateFramebuffer();
 	void CreateFences();
 	void CreateSemaphores();
+	void InitializeUI();
 
 	void RecreateSwapchain();
 	void UpdateDescriptorSets();
@@ -91,4 +93,5 @@ private:
 	SphereModel sphereModel = {};
 	Texture skyboxTexture;
 	std::shared_ptr<LineMesh> line;
+	UI ui;
 };

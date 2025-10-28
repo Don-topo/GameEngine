@@ -26,6 +26,7 @@ void RenderManager::Initialization(SDL_Window* window)
 	// Create semaphores to sync GPU and CPU (fences)
 	CreateFences();
 	CreateSemaphores();
+	InitializeUI();
 
 	skyboxModel.Initialization();
 	SkyboxMesh skyBoxMesh = skyboxModel.GetSkyboxVertex();
@@ -336,6 +337,11 @@ void RenderManager::CreateSemaphores()
 	semaphores.Initialization(device.device);
 }
 
+void RenderManager::InitializeUI()
+{
+	ui.Initialization(device, physicalDevice, instance, graphicsQueue, swapchain, window);
+}
+
 void RenderManager::RecreateSwapchain()
 {
 	
@@ -511,6 +517,7 @@ void RenderManager::Cleanup()
 {	
 	DEV_ASSERT(vkDeviceWaitIdle(device.device) == VK_SUCCESS, "RenderManager", "Error waiting the device to be idling!");
 
+	ui.Cleanup(device.device);
 	fences.Cleanup(device.device);
 	semaphores.Cleanup(device.device);
 	commandBuffer.Cleanup(device.device);	

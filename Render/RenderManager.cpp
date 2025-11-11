@@ -339,7 +339,7 @@ void RenderManager::CreateSemaphores()
 
 void RenderManager::InitializeUI()
 {
-	ui.Initialization(device, physicalDevice, instance, graphicsQueue, swapchain, window);
+	ui.Initialization(device, physicalDevice, instance, graphicsQueue, swapchain, graphicsCommandPool.GetCommandPool(), window);
 }
 
 void RenderManager::RecreateSwapchain()
@@ -385,7 +385,7 @@ void RenderManager::UpdateDescriptorSets()
 void RenderManager::Update()
 {
 	// Wait for fences
-	std::vector<VkFence> fenc = { fences.GetRenderFence(), fences.GetComputeFence() };
+	std::vector<VkFence> fenc = { fences.GetRenderFence()/*, fences.GetComputeFence()*/};
 	DEV_ASSERT(vkWaitForFences(device.device, static_cast<uint32_t>(fenc.size()), fenc.data(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Failed to wait the fences!");
 
 	// Get the next Image
@@ -410,14 +410,14 @@ void RenderManager::Update()
 	computeSubmitInfo.pWaitSemaphores = &semaphores.GetGraphicsSemaphore();
 	computeSubmitInfo.pWaitDstStageMask = &waitStage;
 
-	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
-	DEV_ASSERT(vkQueueSubmit(computeQueue, 1, &computeSubmitInfo, fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error submiting compute buffer");
+	//DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
+	//DEV_ASSERT(vkQueueSubmit(computeQueue, 1, &computeSubmitInfo, fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error submiting compute buffer");
 
-	/* we must wait for the compute shaders to finish before we can read the bone data */
-	DEV_ASSERT(vkWaitForFences(device.device, 1, &fences.GetComputeFence(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Error waiting the compute fence!");
+	// we must wait for the compute shaders to finish before we can read the bone data 
+	//DEV_ASSERT(vkWaitForFences(device.device, 1, &fences.GetComputeFence(), VK_TRUE, UINT64_MAX) == VK_SUCCESS, "RenderManager", "Error waiting the compute fence!");
 
 	// Reset fences before recording commands	
-	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
+	//DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetComputeFence()) == VK_SUCCESS, "RenderManager", "Error reseting the compute fences");
 
 	// Render Graphics
 	DEV_ASSERT(vkResetFences(device.device, 1, &fences.GetRenderFence()) == VK_SUCCESS, "RenderManager", "Error reseting the render fences!");
@@ -462,6 +462,16 @@ void RenderManager::Update()
 
 	vkCmdBeginRenderPass(commandBuffer.GetCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	ui.NewFrame();
+	ui.CreateSettingsWindow();
+	ui.PrepareCommandBuffer();
+	ui.BeginRenderPass(renderPassBeginInfo);
+	vkCmdSetViewport(ui.GetCommandBuffer(), 0, 1, &viewport);
+	vkCmdSetScissor(ui.GetCommandBuffer(), 0, 1, &scissor);
+	ui.Draw();
+	ui.EndRenderPass();
+	ui.EndCommandBuffer();
+	/*
 	// Draw skybox
 	vkCmdBindPipeline(commandBuffer.GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline.GetSkyboxPipeline());
 	// Load skybox texture on initialization
@@ -475,11 +485,11 @@ void RenderManager::Update()
 	vkCmdEndRenderPass(commandBuffer.GetCommandBuffer());
 
 	commandBuffer.End();
-
+	*/
 	std::vector<VkSemaphore> waitSemaphores = { semaphores.GetPresentSemaphore() };
-	std::vector<VkSemaphore> signalSemaphores = { semaphores.GetRenderSemaphore(), semaphores.GetGraphicsSemaphore() };
+	std::vector<VkSemaphore> signalSemaphores = { semaphores.GetRenderSemaphore()/*, semaphores.GetGraphicsSemaphore()*/};
 	std::vector<VkPipelineStageFlags> waitStageFlags = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	std::vector<VkCommandBuffer> commandBuffers = { commandBuffer.GetCommandBuffer() };
+	std::vector<VkCommandBuffer> commandBuffers = { /*commandBuffer.GetCommandBuffer(),*/ ui.GetCommandBuffer()};
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
@@ -505,7 +515,7 @@ void RenderManager::Update()
 	result = vkQueuePresentKHR(presentQueue, &presentInfoKHR);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
-		RecreateSwapchain();
+		return RecreateSwapchain();
 	}
 	else if (result != VK_SUCCESS)
 	{

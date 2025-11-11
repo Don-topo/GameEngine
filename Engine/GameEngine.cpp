@@ -3,7 +3,8 @@
 void GameEngine::Initialization(unsigned int width, unsigned int height, std::string title)
 {
 	DEV_ASSERT(SDL_Init(SDL_INIT_VIDEO) != 0, "GameEngine", "Error initializating SLD3!");
-	sdlWindow = SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_VULKAN);
+	SDL_WindowFlags flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+	sdlWindow = SDL_CreateWindow(title.c_str(), width, height, flags);
 	DEV_ASSERT(sdlWindow, "GameEngine", "Error creating the SDL Window!");
 
 	renderManager = std::make_unique<RenderManager>();
@@ -25,12 +26,17 @@ void GameEngine::Loop()
 	{
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
-			renderManager->Update();
-			audioManager->Update();
+			ImGui_ImplSDL3_ProcessEvent(&e);
+			if (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && e.window.windowID == SDL_GetWindowID(sdlWindow))
+			{
+				running = true;
+			}			
 			if (e.type == SDL_EVENT_QUIT) {
 				running = false;
 			}
-		}		
+		}
+		renderManager->Update();
+		audioManager->Update();
 	}
 }
 

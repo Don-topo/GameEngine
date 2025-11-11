@@ -15,9 +15,15 @@
 class UI
 {
 public:
-	void Initialization(VkDevice device, VkPhysicalDevice physicalDevice, vkb::Instance vkbInstance, VkQueue graphicsQueue, vkb::Swapchain swapchain, SDL_Window* window);
+	void Initialization(VkDevice device, VkPhysicalDevice physicalDevice, vkb::Instance vkbInstance, VkQueue graphicsQueue, vkb::Swapchain swapchain, VkCommandPool commandPool, SDL_Window* window);
 	void NewFrame();
+	void CreateSettingsWindow();
 	void Draw();
+	void PrepareCommandBuffer();
+	void BeginRenderPass(VkRenderPassBeginInfo renderPassBeginInfo);
+	void EndRenderPass();
+	VkCommandBuffer GetCommandBuffer() { return commandBuffer.GetCommandBuffer(); }
+	void EndCommandBuffer();
 	void Cleanup(VkDevice device);
 
 private:

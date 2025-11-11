@@ -1,6 +1,6 @@
 #include "UI.h"
 
-void UI::Initialization(VkDevice device, VkPhysicalDevice physicalDevice, vkb::Instance vkbInstance, VkQueue graphicsQueue, vkb::Swapchain swapchain, SDL_Window* window)
+void UI::Initialization(VkDevice device, VkPhysicalDevice physicalDevice, vkb::Instance vkbInstance, VkQueue graphicsQueue, vkb::Swapchain swapchain, VkCommandPool commandPool, SDL_Window* window)
 {
 	IMGUI_CHECKVERSION();
 
@@ -30,6 +30,8 @@ void UI::Initialization(VkDevice device, VkPhysicalDevice physicalDevice, vkb::I
 
 	DEV_ASSERT(vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool) == VK_SUCCESS, "UI", "Error creating the descriptor pool!");
 	
+	commandBuffer.Initialization(device, commandPool);
+
 	DEV_ASSERT(ImGui_ImplSDL3_InitForVulkan(window), "UI", "Error creating ImGui window!");
 	DEV_LOG(TE_INFO, "UI", "SLD3 ImGui initializated!");
 
@@ -59,12 +61,56 @@ void UI::NewFrame()
 {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+}
+
+void UI::CreateSettingsWindow()
+{
+	ImGui::SetNextWindowBgAlpha(0.8f);
+
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			ImGui::MenuItem("New Config", "CTRL+N");
+			ImGui::MenuItem("Load Config", "CTRL+L");
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
+	if (ImGui::Button("Test"))
+	{
+		// Add imgui action (callback?)
+	}
 }
 
 void UI::Draw()
 {
 	ImGui::Render();
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer.GetCommandBuffer());
+}
+
+void UI::PrepareCommandBuffer()
+{
+	commandBuffer.Reset();
+	commandBuffer.BeginSingleShot();
+}
+
+void UI::BeginRenderPass(VkRenderPassBeginInfo renderPassBeginInfo)
+{
+	renderPassBeginInfo.renderPass = renderPass.GetRenderPass();
+	vkCmdBeginRenderPass(commandBuffer.GetCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void UI::EndRenderPass()
+{
+	vkCmdEndRenderPass(commandBuffer.GetCommandBuffer());
+}
+
+void UI::EndCommandBuffer()
+{
+	commandBuffer.End();
 }
 
 void UI::Cleanup(VkDevice device)

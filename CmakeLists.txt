@@ -1,142 +1,180 @@
 cmake_minimum_required(VERSION 3.30)
+project(GameEngine)
 
-# c++ 17 is required
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Set project name
-project(GameEngine)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Get dependencies
-set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps CACHE PATH "Dependencies download dir")
+# ------------------------------------------------------------
+# FetchContent
+# ------------------------------------------------------------
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
-# VK-Boostrap
-include(FetchContent)
+# ------------------------------------------------------------
+# vk-bootstrap
+# ------------------------------------------------------------
 FetchContent_Declare(
     vk_bootstrap
     GIT_REPOSITORY https://github.com/charles-lunarg/vk-bootstrap
     GIT_TAG v1.3.290
-    GIT_SHALLOW TRUE
 )
-
 FetchContent_MakeAvailable(vk_bootstrap)
-FetchContent_GetProperties(vk_bootstrap)
-if(NOT vk_bootstrap_POPULATED)
-    FetchContent_Populate(vk_bootstrap)
-    add_subdirectory(${vk_bootstrap_SOURCE_DIR} ${vk_bootstrap_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
 
-# Vulkan Memory Allocator (VMA)
-  include(FetchContent)
-  FetchContent_Declare(
+# ------------------------------------------------------------
+# Vulkan Memory Allocator
+# ------------------------------------------------------------
+FetchContent_Declare(
     vma
     GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
     GIT_TAG v3.1.0
-    GIT_SHALLOW TRUE
-  )
+)
+FetchContent_MakeAvailable(vma)
 
-  FetchContent_MakeAvailable(vma)
-
-  FetchContent_GetProperties(vma)
-  if(NOT vma_POPULATED)
-    FetchContent_Populate(vma)
-    add_subdirectory(${vma_SOURCE_DIR} EXCLUDE_FROM_ALL)
-  endif()
-
-# Generate VMA
 set(VMA_IMPL_FILE ${CMAKE_CURRENT_BINARY_DIR}/vma.cpp)
-file(WRITE ${VMA_IMPL_FILE} "#define VMA_IMPLEMENTATION\n#include \"vk_mem_alloc.h\"\n")
+file(WRITE ${VMA_IMPL_FILE}
+"#define VMA_IMPLEMENTATION
+#include \"vk_mem_alloc.h\"
+")
 
+add_library(vma_lib ${VMA_IMPL_FILE})
 
-# SDL3
-set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-set(SDL_STATIC ON CACHE BOOL "" FORCE)
-
-include(FetchContent)
-FetchContent_Declare(
-  SDL3
-  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-  GIT_TAG release-3.2.22
-  GIT_SHALLOW TRUE  
+target_include_directories(vma_lib PUBLIC
+    ${vma_SOURCE_DIR}/include
+    ${Vulkan_INCLUDE_DIRS}
 )
 
-FetchContent_MakeAvailable(SDL3)
-FetchContent_GetProperties(SDL3)
+target_link_libraries(vma_lib PUBLIC Vulkan::Vulkan)
 
-# --- Descargar Dear ImGui automáticamente ---
+# ------------------------------------------------------------
+# SDL3
+# ------------------------------------------------------------
+set(SDL_SHARED OFF)
+set(SDL_STATIC ON)
+FetchContent_Declare(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-3.2.22
+)
+FetchContent_MakeAvailable(SDL3)
+
+# ------------------------------------------------------------
+# ImGui
+# ------------------------------------------------------------
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.91.0  # Puedes usar la versión más reciente disponible
+    GIT_TAG v1.92.4
 )
 FetchContent_MakeAvailable(imgui)
 
-# STB
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
+
+set_target_properties(imgui PROPERTIES DEBUG_POSTFIX "")
+
+target_include_directories(imgui PUBLIC
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+
+target_link_libraries(imgui PUBLIC SDL3::SDL3 Vulkan::Vulkan)
+
+# ------------------------------------------------------------
+# ImGuiFileDialog
+# ------------------------------------------------------------
+FetchContent_Declare(
+    ImGuiFileDialog
+    GIT_REPOSITORY https://github.com/aiekick/ImGuiFileDialog.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(ImGuiFileDialog)
+
+add_library(ImGuiFileDialogLib
+    ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialog.cpp
+)
+
+target_include_directories(ImGuiFileDialogLib PUBLIC
+    ${imguifiledialog_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+
+target_link_libraries(ImGuiFileDialogLib PUBLIC imgui)
+
+# ------------------------------------------------------------
+# Imnodes
+# ------------------------------------------------------------
+FetchContent_Declare(
+    imnodes
+    GIT_REPOSITORY https://github.com/Nelarius/imnodes.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(imnodes)
+
+add_library(ImNodesLib
+    ${imnodes_SOURCE_DIR}/imnodes.cpp
+)
+target_include_directories(ImNodesLib PUBLIC
+    ${imnodes_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}
+)
+target_link_libraries(ImNodesLib PUBLIC imgui)
+
+# ------------------------------------------------------------
+# stb (headers only)
+# ------------------------------------------------------------
 FetchContent_Declare(
     stb
     GIT_REPOSITORY https://github.com/nothings/stb.git
-    GIT_TAG master
-    GIT_SHALLOW TRUE
 )
-
 FetchContent_MakeAvailable(stb)
-#FetchContent_GetProperties(stb)
-#if(NOT stb_POPULATED)
-#    FetchContent_Populate(stb)
-#    add_subdirectory(${stb_SOURCE_DIR} EXCLUDE_FROM_ALL)
-#endif()
 
-# YAML-CPP
+# ------------------------------------------------------------
+# yaml-cpp
+# ------------------------------------------------------------
 FetchContent_Declare(
     yaml-cpp
-    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
     GIT_TAG 0.8.0
-    GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(yaml-cpp)
 
-# Assimp
+# ------------------------------------------------------------
+# assimp
+# ------------------------------------------------------------
 FetchContent_Declare(
     assimp
     GIT_REPOSITORY https://github.com/assimp/assimp.git
     GIT_TAG v5.3.1
-    GIT_SHALLOW TRUE
 )
-
 FetchContent_MakeAvailable(assimp)
 
-# GLM
+# ------------------------------------------------------------
+# glm
+# ------------------------------------------------------------
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG 1.0.1
-    GIT_SHALLOW TRUE
 )
-
 FetchContent_MakeAvailable(glm)
 
-# Physx
-#FetchContent_Declare(
-#    physx
-#    GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysX.git
-#    GIT_TAG 107.3-physx-5.6.1
-#    GIT_SHALLOW TRUE
-#)
-
-#FetchContent_MakeAvailable(physx)
-
-# FMOD
-if(NOT DEFINED FMOD_DIR)
-    #set(FMOD_DIR "${CMAKE_SOURCE_DIR}/external/fmod") 
-    set(FMOD_DIR "C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows") 
-endif()
-
-set(FMOD_INCLUDE_DIR "${FMOD_DIR}/api/core/inc")
-set(FMOD_LIB_DIR     "${FMOD_DIR}/api/core/lib")
-
-file(GLOB SOURCES
+# ------------------------------------------------------------
+# GameEngine sources (ONLY your project)
+# ------------------------------------------------------------
+file(GLOB_RECURSE SOURCES
     Main.cpp
     Engine/*.h
     Engine/*.cpp
@@ -208,31 +246,60 @@ file(GLOB SOURCES
     ${VMA_IMPL_FILE}
 )
 
+foreach(FILE ${SOURCES})
+    if (FILE MATCHES "${CMAKE_BINARY_DIR}")
+        list(REMOVE_ITEM SOURCES ${FILE})
+    endif()
+endforeach()
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${stb_SOURCE_DIR})
-
-# --- Archivos fuente de ImGui ---
-target_sources(${PROJECT_NAME} PRIVATE
-    ${imgui_SOURCE_DIR}/imgui.cpp
-    ${imgui_SOURCE_DIR}/imgui_draw.cpp
-    ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-    ${imgui_SOURCE_DIR}/imgui_demo.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
-)
-
-# --- Directorios de cabeceras ---
 target_include_directories(${PROJECT_NAME} PRIVATE
+    ${stb_SOURCE_DIR}
+    ${vma_SOURCE_DIR}/include
+    ${assimp_SOURCE_DIR}/include
+    ${vk_bootstrap_SOURCE_DIR}/src
+    ${glm_SOURCE_DIR}
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
+    ${imguifiledialog_SOURCE_DIR}
+    ${imnodes_SOURCE_DIR}
 )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    imgui
+    ImGuiFileDialogLib
+    ImnodesLib
+    assimp::assimp
+    yaml-cpp
+    vk-bootstrap
+    SDL3-static
+    vma_lib
+    Vulkan::Vulkan
+)
+
+# ------------------------------------------------------------
+# Vulkan
+# ------------------------------------------------------------
+find_package(Vulkan REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES})
+
+# ------------------------------------------------------------
+# FMOD
+# ------------------------------------------------------------
+if(NOT DEFINED FMOD_DIR)
+    set(FMOD_DIR "C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows")
+endif()
+
+set(FMOD_INCLUDE_DIR "${FMOD_DIR}/api/core/inc")
+set(FMOD_LIB_DIR     "${FMOD_DIR}/api/core/lib")
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${FMOD_INCLUDE_DIR})
 
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/x64)
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmod_vc fmodL_vc) 
+    target_link_libraries(${PROJECT_NAME} PRIVATE fmod_vc fmodL_vc)
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -244,130 +311,44 @@ if(WIN32)
             "${FMOD_LIB_DIR}/x64/fmodL.dll"
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
     )
-    # fmod_vc.lib (release), fmodL_vc.lib (debug)
-elseif(APPLE)
-    target_link_directories(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR})
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmod fmodL)
-elseif(UNIX)
-    target_link_directories(${PROJECT_NAME} PRIVATE ${FMOD_LIB_DIR}/x86_64)
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmod fmodL)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp yaml-cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE ${assimp_SOURCE_DIR}/include)
-
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${vk_bootstrap_SOURCE_DIR}/src
-    ${vma_SOURCE_DIR}/include
-)
-
-#target_link_libraries(${PROJECT_NAME} PRIVATE
-#    PhysX_static_64
-#    PhysXExtensions_static_64
-#    PhysXCommon_static_64
-#    PhysXFoundation_static_64
-#    PhysXPvdSDK_static_64
-#)
-
-#target_include_directories(${PROJECT_NAME} PRIVATE
-#    ${physx_SOURCE_DIR}/include
-#)
-
-# Intentar encontrar Vulkan
-find_package(Vulkan REQUIRED)
-
-
-if (Vulkan_FOUND)
-    message(STATUS "Vulkan encontrado: ${Vulkan_LIBRARIES}")
-
-    target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES})
-
-else()
-    message(WARNING "No se pudo encontrar Vulkan con find_package. Intentando manualmente...")
-
-    if (WIN32)
-        # En Windows, usar la variable de entorno VULKAN_SDK
-        set(VULKAN_SDK $ENV{VULKAN_SDK})
-        if (NOT VULKAN_SDK)
-            message(FATAL_ERROR "No se encontró la variable de entorno VULKAN_SDK. Instala el Vulkan SDK de LunarG.")
-        endif()
-
-        include_directories(${VULKAN_SDK}/Include)
-        link_directories(${VULKAN_SDK}/Lib)
-
-        target_link_libraries(${PROJECT_NAME} PRIVATE vulkan-1)
-
-    elseif(UNIX)
-        # En Linux, asumir que el paquete libvulkan está instalado
-        find_library(VULKAN_LIB vulkan)
-        if (NOT VULKAN_LIB)
-            message(FATAL_ERROR "No se encontró libvulkan. Instala Vulkan (ej: sudo apt install libvulkan-dev).")
-        endif()
-
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${VULKAN_LIB})
-
-    else()
-        message(FATAL_ERROR "Plataforma no soportada aún en este script")
-    endif()
-endif()
-
-# Incluir directorios de Vulkan
-target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS})
-
-# Vincular librerías de Vulkan
-target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES})
-
-add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${glm_SOURCE_DIR})
-
-
-# TODO Compile shaders to spir-v
+# ------------------------------------------------------------
+# Shaders
+# ------------------------------------------------------------
 file(GLOB GLSL_SOURCE_FILES
-  shader/*.frag
-  shader/*.vert
-  shader/*.comp
+    shader/*.vert
+    shader/*.frag
+    shader/*.comp
 )
 
-if(Vulkan_GLSLC_EXECUTABLE)
-  message("Using glslc to compile shaders")
-  foreach(GLSL ${GLSL_SOURCE_FILES})
-    get_filename_component(FILE_NAME ${GLSL} NAME)
-    set(SPIRV "${CMAKE_SOURCE_DIR}/Shaders/${FILE_NAME}.spv")
-    add_custom_command(
-      OUTPUT ${SPIRV}
-      COMMAND ${Vulkan_GLSLC_EXECUTABLE} -o ${SPIRV} ${GLSL}
-      DEPENDS ${GLSL})
-    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
-  endforeach(GLSL)
-elseif (Vulkan_GLSLANG_VALIDATOR_EXECUTABLE)
-  message("Using glslangValidator to compile shaders")
-  foreach(GLSL ${GLSL_SOURCE_FILES})
-    get_filename_component(FILE_NAME ${GLSL} NAME)
-    set(SPIRV "${CMAKE_SOURCE_DIR}/Shaders/${FILE_NAME}.spv")
-    add_custom_command(
-      OUTPUT ${SPIRV}
-      COMMAND ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} -V -o ${SPIRV} ${GLSL}
-      DEPENDS ${GLSL})
-    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
-  endforeach(GLSL)
+if (Vulkan_GLSLC_EXECUTABLE)
+    foreach(GLSL ${GLSL_SOURCE_FILES})
+        get_filename_component(FILE_NAME ${GLSL} NAME)
+        set(SPIRV "${CMAKE_SOURCE_DIR}/Shaders/${FILE_NAME}.spv")
+
+        add_custom_command(
+            OUTPUT ${SPIRV}
+            COMMAND ${Vulkan_GLSLC_EXECUTABLE} -o ${SPIRV} ${GLSL}
+            DEPENDS ${GLSL}
+        )
+
+        list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+    endforeach()
 endif()
 
-add_custom_target(
-  Shaders
-  DEPENDS ${SPIRV_BINARY_FILES}
-)
+add_custom_target(Shaders DEPENDS ${SPIRV_BINARY_FILES})
 add_dependencies(${PROJECT_NAME} Shaders)
 
 add_custom_command(TARGET Shaders POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-  "$<TARGET_PROPERTY:${PROJECT_NAME},SOURCE_DIR>/Shaders"
-  "$<TARGET_PROPERTY:${PROJECT_NAME},BINARY_DIR>/$<CONFIGURATION>/Shaders"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/Shaders"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/Shaders"
 )
 
-if(MSVC)
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static)
-else()
-  target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap SDL3-static stdc++ m)
-endif()
+# ------------------------------------------------------------
+# Preprocessor definitions
+# ------------------------------------------------------------
+target_compile_definitions(${PROJECT_NAME} PUBLIC IMGUI_DEFINE_MATH_OPERATORS)
+add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)

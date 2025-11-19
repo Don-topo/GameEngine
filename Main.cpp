@@ -10,7 +10,7 @@ std::string title = "GameEngine";
 
 int main(int argc, char* argv[])
 {
-    
+
     std::unique_ptr<GameEngine> gameEngine = std::make_unique<GameEngine>();
 
     gameEngine->Initialization(width, height, title);

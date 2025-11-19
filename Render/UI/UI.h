@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
+#include <ImGuiFileDialog.h>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.hpp>
@@ -25,6 +26,7 @@ public:
 	VkCommandBuffer GetCommandBuffer() { return commandBuffer.GetCommandBuffer(); }
 	void EndCommandBuffer();
 	void Cleanup(VkDevice device);
+	void Test();
 
 private:
 	VkDescriptorPool descriptorPool;

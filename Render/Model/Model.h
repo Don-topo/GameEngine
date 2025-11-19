@@ -8,20 +8,24 @@
 #include "../../Animation/Models/Assimp/Node.h"
 #include "../../Animation/Models/Assimp/Bone.h"
 #include "../../AABB/AABB.h"
+//#include <assimp/postprocess.h>
+//#include <assimp/Importer.hpp>
+//#include <assimp/scene.h>
 
 class Model
 {
 public:
-	Model();
+	//Model();
+	void LoadModel(std::string fileName);
 	//Draw();
-	unsigned int GetNumOfTriangles();
+	/*unsigned int GetNumOfTriangles();
 	std::string GetModelFileName();
 	std::string GetModelFileNamePath();
 	std::vector<std::shared_ptr<Node>>& GetNodes();
 	std::unordered_map<std::string, std::shared_ptr<Node>>& GetMapNodes();
 	std::vector<std::shared_ptr<Bone>>& GetBones();
 	std::vector<std::string> GetBonesNames();
-
+	*/
 
 private:
 

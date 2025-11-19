@@ -5,7 +5,7 @@
 #include <vma/vk_mem_alloc.h>
 #include <assimp/texture.h>
 #include <string>
-#include "stb_image.h"
+#include <stb_image.h>
 #include <vector>
 #include "../CommandBuffer/CommandBuffer.h"
 

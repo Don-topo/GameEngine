@@ -2,8 +2,9 @@
 
 #include "../../Logger/Logger.h"
 #include <vulkan/vulkan.h>
-#include "vma/vk_mem_alloc.h"
+#include "../vma-src/include/vk_mem_alloc.h"
 #include "glm/glm.hpp"
+#include <memory>
 
 struct UniformBufferData {
 	size_t bufferSize = 0;

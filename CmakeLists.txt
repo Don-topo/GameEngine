@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 project(GameEngine)
-
+cmake_policy(SET CMP0169 OLD)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -71,7 +71,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
-add_library(imgui STATIC
+add_library(imguiLib STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
@@ -82,14 +82,12 @@ add_library(imgui STATIC
     ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
 )
 
-set_target_properties(imgui PROPERTIES DEBUG_POSTFIX "")
-
-target_include_directories(imgui PUBLIC
+target_include_directories(imguiLib PUBLIC
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
 )
 
-target_link_libraries(imgui PUBLIC SDL3::SDL3 Vulkan::Vulkan)
+target_link_libraries(imguiLib PUBLIC SDL3::SDL3 Vulkan::Vulkan)
 
 # ------------------------------------------------------------
 # ImGuiFileDialog
@@ -111,7 +109,7 @@ target_include_directories(ImGuiFileDialogLib PUBLIC
     ${imgui_SOURCE_DIR}/backends
 )
 
-target_link_libraries(ImGuiFileDialogLib PUBLIC imgui)
+target_link_libraries(ImGuiFileDialogLib PUBLIC imguiLib)
 
 # ------------------------------------------------------------
 # Imnodes
@@ -121,16 +119,19 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/Nelarius/imnodes.git
     GIT_TAG master
 )
-FetchContent_MakeAvailable(imnodes)
+FetchContent_Populate(imnodes)
 
 add_library(ImNodesLib
     ${imnodes_SOURCE_DIR}/imnodes.cpp
 )
+
 target_include_directories(ImNodesLib PUBLIC
     ${imnodes_SOURCE_DIR}
     ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
 )
-target_link_libraries(ImNodesLib PUBLIC imgui)
+
+target_link_libraries(ImNodesLib PUBLIC imguiLib)
 
 # ------------------------------------------------------------
 # stb (headers only)
@@ -170,6 +171,32 @@ FetchContent_Declare(
     GIT_TAG 1.0.1
 )
 FetchContent_MakeAvailable(glm)
+
+# ------------------------------------------------------------
+# NVIDIA PhysX
+# ------------------------------------------------------------
+FetchContent_Declare(
+    physx
+    GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysXSDK.git
+    GIT_TAG        5.4.1
+)
+FetchContent_MakeAvailable(physx)
+
+# Necesita el script special de PhysX
+set(PHYSX_ENABLE_GPU FALSE CACHE BOOL "Disable GPU PhysX") 
+set(PHYSX_BUILD_SHARED FALSE CACHE BOOL "Build static libs")
+set(PX_GENERATE_STATIC_LIBRARIES TRUE CACHE BOOL "Generate static libs")
+
+FetchContent_MakeAvailable(physx)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    PhysX
+    PhysXCommon
+    PhysXExtensions
+    PhysXFoundation
+    PhysXCharacterKinematics
+    PhysXCooking
+)
 
 # ------------------------------------------------------------
 # GameEngine sources (ONLY your project)
@@ -264,12 +291,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${imgui_SOURCE_DIR}/backends
     ${imguifiledialog_SOURCE_DIR}
     ${imnodes_SOURCE_DIR}
+    ${physx_SOURCE_DIR}/physx/include
+    ${physx_SOURCE_DIR}/pxshared/include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    imgui
+    imguiLib
     ImGuiFileDialogLib
-    ImnodesLib
+    ImNodesLib
     assimp::assimp
     yaml-cpp
     vk-bootstrap
@@ -350,5 +379,7 @@ add_custom_command(TARGET Shaders POST_BUILD
 # Preprocessor definitions
 # ------------------------------------------------------------
 target_compile_definitions(${PROJECT_NAME} PUBLIC IMGUI_DEFINE_MATH_OPERATORS)
+set_target_properties(ImNodesLib PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+)
 add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
-add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)

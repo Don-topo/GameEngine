@@ -265,8 +265,8 @@ file(GLOB_RECURSE SOURCES
     Render/VertexBuffer/*.cpp
     Render/UI/*.h
     Render/UI/*.cpp
-    Render/xModelx/*.h
-    Render/xModelx/*.cpp
+    Render/Model/*.h
+    Render/Model/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )

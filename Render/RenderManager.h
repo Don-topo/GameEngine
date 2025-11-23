@@ -22,6 +22,7 @@
 #include "../Animation/Models/Sphere/SphereModel.h"
 #include "Texture/Texture.h"
 #include "UI/UI.h"
+#include "Model/Model.h"
 
 class RenderManager
 {
@@ -94,4 +95,5 @@ private:
 	Texture skyboxTexture;
 	std::shared_ptr<LineMesh> line;
 	UI ui;
+	Model model;
 };

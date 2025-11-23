@@ -5,42 +5,8 @@
 #include <memory>
 #include <vector>
 #include "../Logger/Logger.h"
+#include "../../Structures.h"
 
-enum class cameraType : uint8_t {
-	free = 0,
-	firstPerson,
-	thirdPerson,
-	stationary,
-	stationaryFollowing
-};
-
-enum class cameraProjection : uint8_t {
-	perspective = 0,
-	orthogonal
-};
-
-struct CameraSettings {
-	std::string csCamName = "Camera";
-
-	glm::vec3 csWorldPosition = glm::vec3(0.0f);
-	float csViewAzimuth = 0.0f;
-	float csViewElevation = 0.0f;
-
-	int csFieldOfView = 90;
-	float csOrthoScale = 20.0f;
-
-	bool csFirstPersonLockView = true;
-	int csFirstPersonBoneToFollow = 0;
-	glm::vec3 csFirstPersonOffsets = glm::vec3(0.0f);
-
-	float csThirdPersonDistance = 5.0f;
-	float csThirdPersonHeightOffset = 0.0f;
-
-	float csFollowCamHeightOffset = 2.0f;
-
-	cameraType csCamType = cameraType::free;
-	cameraProjection csCamProjection = cameraProjection::perspective;
-};
 
 class Camera
 {

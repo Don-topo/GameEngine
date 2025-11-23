@@ -35,6 +35,8 @@ void RenderManager::Initialization(SDL_Window* window)
 	skyboxVertexBuffer.UploadData(allocator, device.device, graphicsCommandPool.GetCommandPool(), graphicsQueue, skyBoxMesh);
 	const std::string skyboxTextureName = "C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Textures\\skybox.jpg";
 	skyboxTexture.LoadCubeTexture(allocator, device.device, physicalDevice.physical_device, graphicsCommandPool.GetCommandPool(), graphicsQueue, descriptorPool, rdAssimpTextureDescriptorLayout, skyboxTextureName, false);
+	model = Model();
+	model.LoadModel("C:\\Users\\ruben\\Desktop\\GameEngine\\GameEngine\\Assets\\Models\\man\\Man.gltf");
 }
 
 void RenderManager::InitializeDevice()

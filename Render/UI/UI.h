@@ -26,7 +26,6 @@ public:
 	VkCommandBuffer GetCommandBuffer() { return commandBuffer.GetCommandBuffer(); }
 	void EndCommandBuffer();
 	void Cleanup(VkDevice device);
-	void Test();
 
 private:
 	VkDescriptorPool descriptorPool;

@@ -173,33 +173,31 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm)
 
 # ------------------------------------------------------------
-# NVIDIA PhysX
+# PhysX
 # ------------------------------------------------------------
-FetchContent_Declare(
-    physx
-    GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysXSDK.git
-    GIT_TAG        5.4.1
-)
-FetchContent_MakeAvailable(physx)
+#include(FetchContent)
 
-# Necesita el script special de PhysX
-set(PHYSX_ENABLE_GPU FALSE CACHE BOOL "Disable GPU PhysX") 
-set(PHYSX_BUILD_SHARED FALSE CACHE BOOL "Build static libs")
-set(PX_GENERATE_STATIC_LIBRARIES TRUE CACHE BOOL "Generate static libs")
+# Configuración de PhysX
+#set(PHYSX_STATIC_LIBRARIES ON CACHE BOOL "" FORCE)
+#set(PHYSX_ENABLE_GPU FALSE CACHE BOOL "" FORCE)
+#set(PHYSX_ENABLE_PVD FALSE CACHE BOOL "" FORCE)
+#set(PHYSX_TARGET_ARCHITECTURE "x86_64" CACHE STRING "" FORCE)
+#set(PHYSX_ROOT_DIR "${CMAKE_SOURCE_DIR}/extern/physx" CACHE STRING "" FORCE)
 
-FetchContent_MakeAvailable(physx)
+#FetchContent_Declare(
+#    physx
+#    GIT_REPOSITORY https://github.com/NVIDIA-Omniverse/PhysX.git
+#    GIT_TAG        107.3-physx-5.6.1
+#    SOURCE_DIR     ${PHYSX_ROOT_DIR}
+#)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    PhysX
-    PhysXCommon
-    PhysXExtensions
-    PhysXFoundation
-    PhysXCharacterKinematics
-    PhysXCooking
-)
+#FetchContent_MakeAvailable(physx)
+
+# Incluye los headers
+#include_directories(${PHYSX_ROOT_DIR}/physx/include)
 
 # ------------------------------------------------------------
-# GameEngine sources (ONLY your project)
+# GameEngine sources
 # ------------------------------------------------------------
 file(GLOB_RECURSE SOURCES
     Main.cpp
@@ -219,8 +217,8 @@ file(GLOB_RECURSE SOURCES
     Audio/*.cpp
     Camera/*.h
     Camera/*.cpp
-    #Animation/Models/Assimp/*.h
-    #Animation/Models/Assimp/*.cpp
+    Animation/Models/Assimp/*.h
+    Animation/Models/Assimp/*.cpp
     Animation/Models/Box/*.h
     Animation/Models/Box/*.cpp
     Animation/Models/Capsule/*.h
@@ -267,8 +265,8 @@ file(GLOB_RECURSE SOURCES
     Render/VertexBuffer/*.cpp
     Render/UI/*.h
     Render/UI/*.cpp
-    #Render/Model/*.h
-    #Render/Model/*.cpp
+    Render/xModelx/*.h
+    Render/xModelx/*.cpp
     ${vk_bootstrap_SOURCE_DIR}/*.cpp
     ${VMA_IMPL_FILE}
 )
@@ -291,8 +289,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${imgui_SOURCE_DIR}/backends
     ${imguifiledialog_SOURCE_DIR}
     ${imnodes_SOURCE_DIR}
-    ${physx_SOURCE_DIR}/physx/include
-    ${physx_SOURCE_DIR}/pxshared/include
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -305,7 +301,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     SDL3-static
     vma_lib
     Vulkan::Vulkan
+  #  PhysXFoundation
+ #   PhysXCommon
+#    PhysX
+#    PhysXCooking
 )
+
+#target_link_libraries(${PROJECT_NAME} PRIVATE ${PHYSX_LIBS})
 
 # ------------------------------------------------------------
 # Vulkan

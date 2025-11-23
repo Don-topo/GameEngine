@@ -276,8 +276,3 @@ void UI::Cleanup(VkDevice device)
 	ImGui::DestroyContext();
 	DEV_LOG(TE_INFO, "UI", "ImGui released!");
 }
-
-void UI::Test()
-{
-	DEV_LOG(TE_INFO, "UI", "Action callback");
-}
